@@ -292,6 +292,13 @@ final class AppModel: ObservableObject {
             }
         }
         importer.onFinished = { [weak self] id in self?.importFinished(id) }
+        importer.onFailed = { urls in
+            let alert = NSAlert()
+            alert.messageText = L("录音未能导入")
+            alert.informativeText = L("无法保存录音副本，请检查文件和剩余空间后重试。") + "\n" + urls.map(\.lastPathComponent).joined(separator: "\n")
+            alert.addButton(withTitle: L("好"))
+            alert.runModal()
+        }
         notes.language = { [weak self] id in
             TranslationService.englishName(self?.notesLanguageCode(id) ?? "zh-CN")
         }

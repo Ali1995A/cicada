@@ -1375,3 +1375,13 @@
 "去掉这些内容后就没有可分享的了。" = "Nothing would be left to share without these.";
 "这场会议没有可分享的内容。" = "This meeting has nothing to share.";
 "还有 %lld 处" = "And %lld more";
+
+"录音未能导入" = "Recording could not be imported";
+
+"无法保存录音副本，请检查文件和剩余空间后重试。" = "Could not save a copy of the recording. Check the file and available space, then retry.";
+
+"导出文字记录" = "Export transcript";
+
+"发送录音到 Mac" = "Send recording to Mac";
+
+"请输入 API 基础地址，不要包含用户名、密码、查询参数或片段。" = "Enter an API base URL without a username, password, query or fragment.";

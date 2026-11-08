@@ -91,6 +91,10 @@ struct AIProvider: Identifiable, Equatable {
         var s = raw.trimmingCharacters(in: .whitespacesAndNewlines)
         guard !s.isEmpty else { return nil }
         if !s.contains("://") { s = (isNearby(s) ? "http://" : "https://") + s }
+        // Addresses live in ordinary settings: credentials must use AIKey. Reject even empty
+        // query/fragment delimiters before adding a slash, which belongs to the path only.
+        guard let parts = URLComponents(string: s), parts.user == nil, parts.password == nil,
+              parts.query == nil, parts.fragment == nil else { return nil }
         if !s.hasSuffix("/") { s += "/" }
         guard let url = URL(string: s), let host = url.host, !host.isEmpty else { return nil }
         if url.scheme == "https" { return url }

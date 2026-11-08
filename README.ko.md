@@ -175,3 +175,7 @@ scripts/package.sh          # 정식 버전 DMG, zip 및 SHA-256 체크섬 패�
 ## 라이선스
 
 이 프로젝트는 [Apache-2.0](LICENSE) 라이선스로 공개되어 있습니다. 가상 마이크 드라이버 BlackHole 2ch는 GPL 라이선스를 따르며 설치 패키지에 포함되지 않고 설치를 누를 때 공식 주소에서 내려받습니다. 포함된 성문 모델은 [WeSpeaker](https://github.com/wenet-e2e/wespeaker)가 VoxCeleb으로 학습한 ResNet34-LM(CC BY 4.0 라이선스)이며 `scripts/convert-voiceprint.py`로 Core ML로 변환했습니다.
+
+## Apple 녹음 연동 개발 브랜치
+
+Mac 가져오기 사본 보관, 실험적인 iPhone 녹음 공유 및 사용자 지정 API URL 검증을 추가합니다. Apple Watch는 음성 메모의 지원되는 내보내기 절차를 사용합니다. Watch 앱이나 실시간 전송은 포함하지 않습니다. Apple 환경 빌드와 실제 기기 테스트는 아직 수행하지 않았습니다. 정식 릴리스로 취급하지 마세요. [연동 안내](docs/apple-recording-handoff.md).

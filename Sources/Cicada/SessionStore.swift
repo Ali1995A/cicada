@@ -43,8 +43,8 @@ struct Session: Codable, Identifiable, Equatable {
     var voiceNames: [String: String]? = nil
     /// Names Ling read from the conversation, keyed by voice id; shown until the user says otherwise.
     var voiceGuesses: [String: VoiceGuess]? = nil
-    /// An imported recording or video: its file name, where it was (played from there; never
-    /// copied or deleted), and true until transcribing it finished.
+    /// An imported recording or video: its original name, the playable local path, and
+    /// true until transcribing finishes. Older records may still reference the original file.
     var sourceFile: String? = nil
     var sourcePath: String? = nil
     var importing: Bool? = nil
@@ -308,20 +308,58 @@ final class SessionStore: ObservableObject {
 
     // MARK: Imported files
 
-    /// A record for a recording or video, dated when it was recorded; filled by `FileImporter`.
-    func beginImport(file: URL, recordedAt: Date, duration: Double) -> Session {
-        let fid = DateFormatter()
-        fid.dateFormat = "yyyyMMdd-HHmmss"
-        let id = "import-\(fid.string(from: Date()))-\(UUID().uuidString.prefix(4).lowercased())"
-        var s = Session(id: id, title: Session.defaultTitle(recordedAt), startedAt: recordedAt,
-                        endedAt: recordedAt.addingTimeInterval(max(1, duration)), lines: [], hasAudio: false)
-        s.sourceFile = file.lastPathComponent
-        s.sourcePath = file.path
-        s.importing = true
-        sessions.append(s)
-        sessions.sort { $0.startedAt > $1.startedAt }
-        saveNow(id)
-        return s
+    /// Keep a private copy before publishing the record: AirDrop and exported Voice Memos
+    /// commonly arrive in Downloads, which the user may clean up after importing.
+    func beginImport(file: URL, recordedAt: Date, duration: Double) async throws -> Session {
+        guard file.isFileURL else { throw CocoaError(.fileReadUnsupportedScheme) }
+        let id = "import-\(UUID().uuidString.lowercased())"
+        let destination = folder(id)
+        let copy = destination.appendingPathComponent("source").appendingPathExtension(file.pathExtension)
+        do {
+            // Large recordings must not block the UI or the live audio pipeline.
+            try await Task.detached(priority: .userInitiated) {
+                let fm = FileManager.default
+                guard try file.resourceValues(forKeys: [.isRegularFileKey]).isRegularFile == true else {
+                    throw CocoaError(.fileReadUnsupportedScheme)
+                }
+                try fm.createDirectory(at: destination, withIntermediateDirectories: true,
+                                       attributes: [.posixPermissions: 0o700])
+                try fm.copyItem(at: file, to: copy)
+                try fm.setAttributes([.posixPermissions: 0o600], ofItemAtPath: copy.path)
+            }.value
+            try Task.checkCancellation()
+            let length = duration.isFinite ? max(1, duration) : 1
+            var s = Session(id: id, title: Session.defaultTitle(recordedAt), startedAt: recordedAt,
+                            endedAt: recordedAt.addingTimeInterval(length), lines: [], hasAudio: false)
+            s.sourceFile = file.lastPathComponent
+            s.sourcePath = copy.path
+            s.importing = true
+            let encoder = JSONEncoder()
+            encoder.dateEncodingStrategy = .iso8601
+            encoder.outputFormatting = [.prettyPrinted, .sortedKeys]
+            try encoder.encode(s).write(to: destination.appendingPathComponent("session.json"), options: .atomic)
+            sessions.append(s)
+            sessions.sort { $0.startedAt > $1.startedAt }
+            return s
+        } catch {
+            try? FileManager.default.removeItem(at: destination)
+            throw error
+        }
+    }
+
+    /// Only finalized, readable recordings can leave the app through the system share sheet.
+    /// Do not offer the growing partial file while recording or rewrapping is still underway.
+    func shareableAudioURL(_ session: Session) -> URL? {
+        guard session.id != liveID, session.endedAt != nil, session.importing != true else { return nil }
+        let url: URL
+        if let path = session.sourcePath { url = URL(fileURLWithPath: path) }
+        else if session.hasAudio { url = systemAudioURL(session.id) }
+        else { return nil }
+        if session.sourceFile == nil,
+           FileManager.default.fileExists(atPath: AudioFileWriter.partial(url).path) { return nil }
+        guard (try? url.resourceValues(forKeys: [.isRegularFileKey]).isRegularFile) == true,
+              FileManager.default.isReadableFile(atPath: url.path) else { return nil }
+        return url
     }
 
     /// Transcribing again from the start: the old lines and notes go.

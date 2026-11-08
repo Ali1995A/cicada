@@ -175,3 +175,7 @@ See [AGENTS.md](AGENTS.md) for code architecture. The website source is in `site
 ## License
 
 This project is licensed under [Apache-2.0](LICENSE). The BlackHole 2ch virtual microphone driver is licensed under the GPL; it is not bundled in the installer and is downloaded from its official URL when you click install. The bundled voiceprint model is [WeSpeaker](https://github.com/wenet-e2e/wespeaker)'s ResNet34-LM trained on VoxCeleb (CC BY 4.0), converted to Core ML by `scripts/convert-voiceprint.py`.
+
+## Apple recording handoff development branch
+
+This branch adds retained Mac import copies, experimental iPhone audio sharing, and custom API URL validation. Apple Watch recordings use a supported Voice Memos export workflow; there is no native Watch app or live streaming. Apple builds and real-device testing are pending. Do not treat this as a release. See the [handoff guide](docs/apple-recording-handoff.md).

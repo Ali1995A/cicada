@@ -175,3 +175,7 @@ scripts/package.sh          # 打包正式版 DMG、zip 和 SHA-256 校验值
 ## ライセンス
 
 本プロジェクトは [Apache-2.0](LICENSE) ライセンスのもとで公開されています。仮想マイクドライバーの BlackHole 2ch は GPL ライセンスであり、インストーラーには同梱されず、インストールをクリックした際に公式の配布元からダウンロードされます。同梱の声紋モデルは [WeSpeaker](https://github.com/wenet-e2e/wespeaker) が VoxCeleb で学習した ResNet34-LM（CC BY 4.0 ライセンス）で、`scripts/convert-voiceprint.py` によって Core ML に変換されています。
+
+## Apple 録音連携の開発ブランチ
+
+Mac の読み込み音声コピー保存、実験的な iPhone 音声共有、カスタム API URL 検証を追加します。Apple Watch はボイスメモの対応する書き出し手順を使用します。Watch アプリやリアルタイム転送は含みません。Apple 環境でのビルドと実機テストは未実施です。正式版として扱わないでください。[連携ガイド](docs/apple-recording-handoff.md)。

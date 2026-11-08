@@ -8,6 +8,7 @@ import Testing
         for name in ["a.m4a", "b.MP3", "c.wav", "d.mp4", "e.mov", "f.aiff"] {
             #expect(FileImporter.importable(URL(fileURLWithPath: "/tmp/\(name)")), "\(name)")
         }
+        #expect(!FileImporter.importable(URL(string: "https://example.com/recording.m4a")!))
         for name in ["a.txt", "b.pdf", "c", "d.png"] {
             #expect(!FileImporter.importable(URL(fileURLWithPath: "/tmp/\(name)")), "\(name)")
         }

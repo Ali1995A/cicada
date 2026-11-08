@@ -17,9 +17,9 @@ Acceptance: exported iPhone M4A opens on Mac; imported audio survives removal of
 
 ## Current branch status (2026-11-08)
 
-This branch currently contains the design and regression tests only. The retention fix, iPhone audio-share control and URL-validation change are NOT implemented. The tests are intentionally expected to fail against the unchanged implementation, but have not been executed on macOS yet. They must not be described as passing or as proof of the complete workflow.
+The development branch now includes a source-code prototype: Mac imports copy their source into the session folder off the UI thread, a failed copy does not create a record, iOS exposes completed audio through the system share sheet, and custom API bases reject embedded credentials/query/fragment data. Apple Watch still uses the supported Voice Memos file workflow; no watchOS app or live transfer is implemented.
 
-Local checks: `git diff --check` passes; `python3 scripts/check-agents.py` passes. `scripts/test.sh` stops at `xcode-select: command not found` in the Linux executor. No Apple device or model API has been used. GitHub Actions did not create a workflow run for the initial draft-PR commit when checked; its exact cause is not confirmed.
+Native test/build status: NOT RUN successfully. `scripts/test.sh` stops at `xcode-select: command not found` in this Linux executor. No Apple device or model API has been used. GitHub Actions did not create a workflow run for the initial draft-PR commit when checked; its exact cause is not confirmed. Added Swift tests are source only, not a claimed passing suite. This is a draft prototype, not an installable verified release.
 
 ## Existing Mac custom API configuration
 
@@ -41,3 +41,9 @@ Models must be chosen from the actual provider's supported catalog; this branch 
 - Test a long recording and an interrupted transfer. Keep the source until import and playback are verified.
 - After the retention change is implemented, remove only a disposable duplicate of the source and prove the imported recording still plays and can be retranscribed.
 - Verify generated notes contain only meeting deliverable content; manually review decisions, owners, deadlines and uncertain words against the recording.
+
+## Static verification of this prototype
+
+Nine changed Swift files parsed with tree-sitter-swift without syntax errors. `git diff --check` and `scripts/check-agents.py` pass. These checks do not resolve Swift types, actor isolation, Apple framework availability, macros, or runtime behavior; native builds and tests remain required. Importing copies the entire source file (including video if selected), so allow sufficient free disk space. Existing imported records remain backward-compatible and retain their old source paths; they are not silently migrated.
+
+The new API URL validation also runs before saving the three endpoint fields to ordinary settings. It does not migrate or erase previously saved values. Native localization extraction (`scripts/strings.py`) and iOS typechecking were attempted but blocked by missing Swift/xcrun; the five added text keys were checked in all four language tables. Static review caught and corrected sharing a partially rewrapped recording: an own-recording `.aac` sidecar now prevents sharing until finalization finishes.

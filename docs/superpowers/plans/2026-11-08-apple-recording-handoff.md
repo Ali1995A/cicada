@@ -18,8 +18,10 @@ Copy failure and cleanup; temporary source removal; duplicate filenames; live re
 ## Tasks
 
 - [ ] Add failing tests for imported audio retention, copy failure and URL validation; run native tests.
-- [ ] Implement managed local copies and an import failure callback, preserving successful files in a mixed batch.
-- [ ] Add iPhone system share access to a completed local audio file.
-- [ ] Reject embedded URL credentials, query and fragment on custom AI bases.
+- [x] Implement managed local copies and an import failure callback, preserving successful files in a mixed batch.
+- [x] Add iPhone system share access to a completed local audio file.
+- [x] Reject embedded URL credentials, query and fragment on custom AI bases.
 - [ ] Update localized user guidance, run native tests, iOS typecheck, and review final diff.
 - [ ] Push isolated development branch and draft PR; disclose any unrun tests and device acceptance checks.
+
+Prototype exception: implementation continued at coordinator direction despite unavailable native tooling; no native red/green claim is made. Native builds/tests and device acceptance remain open.

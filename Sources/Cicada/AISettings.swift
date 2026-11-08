@@ -265,7 +265,8 @@ struct AISettingsView: View {
                     model.applyAIService()
                 }
                 CommitField(label: L("地址"), placeholder: L("跟上面一样"), value: settings.aiCustomVoiceBase) {
-                    settings.aiCustomVoiceBase = $0
+                    guard let address = validatedCustomAddress($0) else { return }
+                    settings.aiCustomVoiceBase = address
                     model.applyAIService()
                 }
                 localNetworkNote(settings.aiCustomVoiceBase)
@@ -305,7 +306,8 @@ struct AISettingsView: View {
                     model.applyAIService()
                 }
                 CommitField(label: L("地址"), placeholder: L("跟上面一样"), value: settings.aiCustomHearBase) {
-                    settings.aiCustomHearBase = $0
+                    guard let address = validatedCustomAddress($0) else { return }
+                    settings.aiCustomHearBase = address
                     model.applyAIService()
                 }
                 localNetworkNote(settings.aiCustomHearBase)
@@ -482,10 +484,25 @@ struct AISettingsView: View {
             : L("只存在这台 Mac 上（只有你的账户能读），只发给 \(name)（\(host)）")
     }
 
+    /// Validate before ordinary settings see the address. Empty secondary addresses inherit
+    /// the text service; a bad address stays in the field, not in UserDefaults or a request.
+    private func validatedCustomAddress(_ raw: String) -> String? {
+        let address = raw.trimmingCharacters(in: .whitespacesAndNewlines)
+        guard address.isEmpty || AIProvider.customBase(address) != nil else {
+            keyHint = (L("请输入 API 基础地址，不要包含用户名、密码、查询参数或片段。"), nil, "")
+            // The shared hint lives in the text section, which may have been folded away.
+            open.insert("text")
+            return nil
+        }
+        keyHint = nil
+        return address
+    }
+
     /// Saves what was typed (a custom service's address and model too), then checks.
     private func save() {
         if provider.id == .custom {
-            settings.aiCustomBase = baseDraft.trimmingCharacters(in: .whitespaces)
+            guard let address = validatedCustomAddress(baseDraft) else { return }
+            settings.aiCustomBase = address
             settings.aiModels["custom"] = textDraft.trimmingCharacters(in: .whitespaces)
             model.applyAIService()
         }

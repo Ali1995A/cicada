@@ -102,7 +102,16 @@ struct RecordView: View {
                 }
                 .disabled(notes.generatingID != nil || session.lines.isEmpty)
                 .accessibilityLabel(Text("生成纪要"))
-                ShareLink(item: TranscriptExport.markdown(session), subject: Text(session.displayTitle)) {
+                Menu {
+                    ShareLink(item: TranscriptExport.markdown(session), subject: Text(session.displayTitle)) {
+                        Label("导出文字记录", systemImage: "doc.text")
+                    }
+                    if let audio = model.store.shareableAudioURL(session) {
+                        ShareLink(item: audio, subject: Text(session.displayTitle)) {
+                            Label("发送录音到 Mac", systemImage: "waveform")
+                        }
+                    }
+                } label: {
                     Image(systemName: "square.and.arrow.up")
                 }
                 .accessibilityLabel(Text("导出"))
