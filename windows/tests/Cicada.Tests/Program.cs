@@ -417,6 +417,58 @@ static class Tests
         public void Stop() { }
     }
 
+    static short Loudest(List<short> pcm, double from, double to)
+    {
+        short m = 0;
+        for (int i = (int)(from * 16000); i < Math.Min(pcm.Count, (int)(to * 16000)); i++) m = Math.Max(m, Math.Abs(pcm[i]));
+        return m;
+    }
+
+    /// 电脑和会议室: the room mic goes into the meeting's one recording at its place on the clock (#19).
+    public static void TheRoomIsMixedIntoTheRecordingWhereItWasHeard()
+    {
+        var audio = new FakeAudio();
+        var mix = new RoomMix(audio.Open(Path.Combine(Path.GetTempPath(), $"mix-{Guid.NewGuid()}.aac"))!);
+        for (int i = 0; i < 30; i++) // 3 s of the PC at 1000; the room at 500 from 1 s to 2 s, half a second late
+        {
+            mix.Write(Enumerable.Repeat((short)1000, 1600).ToArray());
+            if (i >= 15 && i < 25) mix.Room(Enumerable.Repeat((short)500, 1600).ToArray(), (i - 5) * 1600);
+        }
+        mix.Write(Enumerable.Repeat((short)30000, 1600).ToArray());
+        mix.Room(Enumerable.Repeat((short)30000, 1600).ToArray(), 3 * 16000);
+        mix.Room(Enumerable.Repeat((short)30000, 1600).ToArray(), 4 * 16000); // after the PC's last sample
+        mix.Close();
+        Check(audio.Closed, "closed");
+        Equal(4 * 16000 + 1600, audio.Samples.Count, "the PC's 3.1 s, then silence up to the room's last words");
+        Equal((short)1000, Loudest(audio.Samples, 0, 1), "the PC alone");
+        Equal((short)1500, audio.Samples.Skip(16000).Take(16000).Min(), "both, every sample of that second");
+        Equal((short)1000, Loudest(audio.Samples, 2, 3), "the PC alone again");
+        Equal(short.MaxValue, audio.Samples[3 * 16000], "loud on loud clips instead of wrapping");
+        Equal((short)0, Loudest(audio.Samples, 3.2, 4), "nothing between");
+        Equal((short)30000, audio.Samples[^1], "the room after the PC ended");
+    }
+
+    public static async Task BothSidesOfAMeetingGoIntoItsRecording()
+    {
+        var ling = Client(new Fake(_ => Reply("{}")));
+        var audio = new FakeAudio();
+        var store = new SessionStore { Audio = audio };
+        var settings = new AppSettings { Target = "zh-CN", SpeakerVoices = false };
+        var main = new ListenEngine(ling, new Translator(ling), store, new NotesEngine(ling, store), settings);
+        var room = new ListenEngine(ling, new Translator(ling), store, new NotesEngine(ling, store), settings, roomSide: true);
+        var pc = new GappySource((0.5, true), (2.5, false));
+        var mic = new GappySource((2.0, true)); // a mic sends all the time, quiet or not
+        var ended = new TaskCompletionSource();
+        pc.Ended += _ => ended.TrySetResult();
+        main.Start(pc);
+        room.Join(mic, main.SessionId!, store.Get(main.SessionId!)!.StartedAt, main.Mix);
+        await ended.Task;
+        await room.Stop();
+        await main.Stop();
+        Check(audio.Closed, "closed when the meeting ends");
+        Check(Loudest(audio.Samples, 1.0, 1.8) > 0, "the room's sound, after the PC's ended, is in the recording");
+    }
+
     public static void SilenceGoesInOnlyOnceTheStreamIsASecondBehind()
     {
         Equal(0, Recording.Behind(0.5, 0, 1600), "a packet a little late: nothing");

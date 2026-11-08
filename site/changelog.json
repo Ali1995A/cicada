@@ -10,6 +10,7 @@
         "kind": "fixed",
         "platforms": [
           "mac",
+          "windows",
           "linux"
         ],
         "title": "打开麦克风时，会议录音里也有自己的声音。",

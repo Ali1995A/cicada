@@ -23,6 +23,10 @@ public sealed class ListenEngine
     long began;
     /// 保存会议录音: the main side writes what it hears to the meeting's system.aac.
     IAudioWriter? recorder;
+    /// The main side's recording, which 电脑和会议室's room side adds itself into (`Join`).
+    public RoomMix? Mix => recorder as RoomMix;
+    /// The room side: the main side's recording, where what the room mic hears goes too.
+    RoomMix? roomMix;
     Task? worker;
     Segmenter? segmenter;
     readonly Dictionary<int, Heard?> done = [];
@@ -157,7 +161,7 @@ public sealed class ListenEngine
             try
             {
                 Directory.CreateDirectory(Path.GetDirectoryName(path)!);
-                recorder = files.Open(path);
+                recorder = files.Open(path) is { } file ? new RoomMix(file) : null;
             }
             catch (Exception e) { Log.Debug($"listen: recording not started {e.GetType().Name}"); }
             if (recorder is null) Log.Debug("listen: no recording, the encoder refused");
@@ -170,11 +174,13 @@ public sealed class ListenEngine
         Changed?.Invoke();
     }
 
-    /// The room side joins the meeting `sessionId`, which began at `startedAt`.
-    public void Join(IAudioSource mic, string sessionId, DateTimeOffset startedAt)
+    /// The room side joins the meeting `sessionId`, which began at `startedAt`; what it hears goes
+    /// into the meeting's recording `mix` (the main side's `Mix`) too.
+    public void Join(IAudioSource mic, string sessionId, DateTimeOffset startedAt, RoomMix? mix = null)
     {
         if (Listening || !RoomSide) return;
         SessionId = sessionId;
+        roomMix = mix;
         Room = true;
         store.MarkRoom(sessionId);
         Begin(mic, true, Math.Max(0, (DateTimeOffset.Now - startedAt).TotalSeconds));
@@ -214,10 +220,10 @@ public sealed class ListenEngine
                 {
                     var silence = new short[gap];
                     segmenter.Feed(silence);
-                    Record(silence);
+                    Record(silence, fed);
                     fed += gap;
                 }
-                Record(buf);
+                Record(buf, fed);
                 fed += buf.Length;
                 Level = Rms(buf);
                 // The computer is playing speech: the room mic would hear it from the speakers.
@@ -254,8 +260,14 @@ public sealed class ListenEngine
 
     void OnSamples(short[] buf) => audio?.Writer.TryWrite((buf, System.Diagnostics.Stopwatch.GetElapsedTime(began).TotalSeconds));
 
-    void Record(short[] pcm)
+    /// `fed`: samples this side gave before these, so the room's land at their place in the meeting.
+    void Record(short[] pcm, long fed)
     {
+        if (RoomSide)
+        {
+            roomMix?.Room(pcm, (long)Math.Round(offset * Segmenter.Rate) + fed);
+            return;
+        }
         if (recorder is null) return;
         try { recorder.Write(pcm); }
         catch (Exception e)
@@ -309,6 +321,7 @@ public sealed class ListenEngine
         Task[] waiting;
         lock (gate) waiting = inFlight.ToArray();
         CloseRecording();
+        roomMix = null;
         await Task.WhenAny(Task.WhenAll(waiting), Task.Delay(15_000));
         var id = SessionId!;
         if (RoomSide)
