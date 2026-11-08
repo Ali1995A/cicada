@@ -39,3 +39,32 @@ import Testing
         #expect(s.session(id) == nil)
     }
 }
+
+@MainActor @Suite struct ImportedAudioRetentionTests {
+    @Test func importedAudioSurvivesRemovalOfOriginal() throws {
+        let root = FileManager.default.temporaryDirectory.appendingPathComponent(UUID().uuidString)
+        try FileManager.default.createDirectory(at: root, withIntermediateDirectories: true)
+        defer { try? FileManager.default.removeItem(at: root) }
+        let source = root.appendingPathComponent("Phone meeting.m4a")
+        let bytes = Data([1, 2, 3, 4])
+        try bytes.write(to: source)
+        let store = SessionStore(root: root.appendingPathComponent("Sessions"))
+        let session = try store.beginImport(file: source, recordedAt: Date(), duration: 60)
+        #expect(session.sourceFile == "Phone meeting.m4a")
+        #expect(session.sourcePath != source.path)
+        try FileManager.default.removeItem(at: source)
+        let retained = try #require(session.sourcePath)
+        #expect(try Data(contentsOf: URL(fileURLWithPath: retained)) == bytes)
+        #expect(SessionStore(root: store.root).session(session.id)?.sourcePath == retained)
+    }
+
+    @Test func missingSourceDoesNotCreateARecord() throws {
+        let root = FileManager.default.temporaryDirectory.appendingPathComponent(UUID().uuidString)
+        defer { try? FileManager.default.removeItem(at: root) }
+        let store = SessionStore(root: root)
+        #expect(throws: (any Error).self) {
+            _ = try store.beginImport(file: root.appendingPathComponent("absent.m4a"), recordedAt: Date(), duration: 0)
+        }
+        #expect(store.sessions.isEmpty)
+    }
+}
