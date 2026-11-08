@@ -175,3 +175,7 @@ scripts/package.sh          # 打包正式版 DMG、zip 和 SHA-256 校验值
 ## ライセンス
 
 本プロジェクトは [Apache-2.0](LICENSE) ライセンスのもとで公開されています。仮想マイクドライバーの BlackHole 2ch は GPL ライセンスであり、インストーラーには同梱されず、インストールをクリックした際に公式の配布元からダウンロードされます。同梱の声紋モデルは [WeSpeaker](https://github.com/wenet-e2e/wespeaker) が VoxCeleb で学習した ResNet34-LM（CC BY 4.0 ライセンス）で、`scripts/convert-voiceprint.py` によって Core ML に変換されています。
+
+## 会議の音声入力
+
+設定 → 一般で、macOS に表示される iPhone 連係マイク、AirPods、その他の物理入力を選べます。システムの既定マイクは変更しません。切り替え前に会議マイクをオフにしてください。自動選択は会議室マイクを優先し、切断時は既存の代替選択と通知を使います。連係には Apple の対応機器・アカウント・ネットワーク条件が必要です。AirPods は主に装着者の声を収録します。

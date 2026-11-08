@@ -175,3 +175,7 @@ See [AGENTS.md](AGENTS.md) for code architecture. The website source is in `site
 ## License
 
 This project is licensed under [Apache-2.0](LICENSE). The BlackHole 2ch virtual microphone driver is licensed under the GPL; it is not bundled in the installer and is downloaded from its official URL when you click install. The bundled voiceprint model is [WeSpeaker](https://github.com/wenet-e2e/wespeaker)'s ResNet34-LM trained on VoxCeleb (CC BY 4.0), converted to Core ML by `scripts/convert-voiceprint.py`.
+
+## Meeting audio input
+
+Choose a meeting input in Settings → General: an iPhone Continuity microphone, AirPods, or another physical input exposed by macOS. This does not change the system default. Turn the meeting microphone off before switching. Automatic mode still favors room microphones; disconnected inputs use the existing fallback and notice. Continuity requires Apple's supported devices/account/network setup. AirPods primarily capture the wearer's voice.

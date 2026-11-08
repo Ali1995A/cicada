@@ -313,7 +313,7 @@ final class AppModel: ObservableObject {
         speak.roomLanguage = { [weak self] in self?.listen.activeLang?.code }
         speak.inputDevice = { [weak self] in self?.systemMic.recordingDevice }
         let roomMic = { [weak self] () -> OutputDevice? in
-            MainActor.assumeIsolated { AudioDevices.roomMic(excluding: self?.fakeGoneMics ?? []) }
+            MainActor.assumeIsolated { AudioDevices.roomMic(excluding: self?.fakeGoneMics ?? [], preferredUID: self?.settings.roomMicUID) }
         }
         listen.roomDevice = roomMic
         roomListen.roomDevice = roomMic
@@ -389,7 +389,7 @@ final class AppModel: ObservableObject {
         guard let engine = both ? roomListen : settings.listensToRoom && listen.isRunning ? listen : nil,
               let uid = engine.roomMicUID,
               fakeGoneMics.contains(uid) || !AudioDevices.inputs().contains(where: { $0.uid == uid }) else { return }
-        let next = AudioDevices.roomMic(excluding: fakeGoneMics)
+        let next = AudioDevices.roomMic(excluding: fakeGoneMics, preferredUID: settings.roomMicUID)
         debugLog("room mic gone: \(uid) → \(next?.name ?? "none")")
         if next != nil { engine.reconnectAudio() } else if both { stopRoomSide() } else { stop() }
         let note = RoomMicLoss.detail(next: next?.name, builtIn: next.map { AudioDevices.transport($0.id) == kAudioDeviceTransportTypeBuiltIn } ?? false,
@@ -896,6 +896,13 @@ final class AppModel: ObservableObject {
     /// where two recognizers interrupt each other: the microphone in place of the Mac's audio).
     /// Not kept for the next launch: listening starts by itself, never with the microphone open.
     var micOn: Bool { settings.hearsRoom }
+
+    /// The actual pinned live input, rather than a saved preference that may be disconnected.
+    var activeMeetingInputName: String? {
+        let engine = settings.hearsBoth ? roomListen : listen
+        guard settings.hearsRoom, engine.isRunning, let uid = engine.roomMicUID else { return nil }
+        return AudioDevices.inputs().first { $0.uid == uid }?.name
+    }
 
     func setMic(_ on: Bool) {
         let value = !on ? "system" : Recognition.legacy ? "room" : "both"

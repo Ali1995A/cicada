@@ -175,3 +175,7 @@ scripts/package.sh          # 打包正式版 DMG、zip 和 SHA-256 校验值
 ## 开源协议
 
 本项目采用 [Apache-2.0](LICENSE) 协议开源。虚拟麦克风驱动 BlackHole 2ch 采用 GPL 协议，不打包在安装包内，点安装时从其官方地址下载。随附的声纹模型是 [WeSpeaker](https://github.com/wenet-e2e/wespeaker) 在 VoxCeleb 上训练的 ResNet34-LM（CC BY 4.0 协议），由 `scripts/convert-voiceprint.py` 转为 Core ML。
+
+## 会议收音设备
+
+在设置 → 通用中选择会议收音设备，可使用 macOS 提供的 iPhone 连续互通麦克风、AirPods 或其他实体输入，不改变系统默认麦克风。切换前先关闭会议麦克风；自动选择仍优先会议室麦克风。设备断开时沿用自动选择及现有提示。iPhone 连续互通需满足 Apple 的设备、账号和网络条件；AirPods 主要收取佩戴者声音。
