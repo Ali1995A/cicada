@@ -456,6 +456,31 @@ final class ListenEngine {
         audioTap = nil
         let room = role == .room || settings.listensToRoom
         router.setRoomGate(room)
+        #if DEBUG
+        // Explicit developer opt-in; never silently replace a user's normal capture source.
+        if room, let path = ProcessInfo.processInfo.environment["CICADA_WATCH_PCM_FIFO"], !path.isEmpty {
+            let input = WatchPCMSource(path: path)
+            let router = self.router
+            input.isReady = { router.acceptsExternalAudio }
+            input.onAudio = { pcm in router.push(pcm) }
+            input.onEnded = { [weak self, weak input] clean in
+                DispatchQueue.main.async {
+                    MainActor.assumeIsolated {
+                        guard let self, let input, self.audioTap === input else { return }
+                        self.setStatus(clean ? L("手表录音已结束，正在完成识别") : L("手表连接中断，可能有未送达音频"))
+                    }
+                }
+            }
+            do {
+                try input.start()
+                audioTap = input
+                return true
+            } catch {
+                setStatus(L("手表音频管道无法启动"))
+                return false // Never fall back to an unrelated microphone.
+            }
+        }
+        #endif
         if room { return startRoomMic() }
         if SystemAudioPermission.status() == .denied {
             debugLog("audio tap: system audio recording was refused")

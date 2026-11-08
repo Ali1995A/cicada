@@ -97,6 +97,9 @@ final class AudioRouter: @unchecked Sendable {
         }
     }
 
+    /// Network capture must not acknowledge PCM while no recognizer can receive it.
+    var acceptsExternalAudio: Bool { queue.sync { sink != nil && format != nil } }
+
     func push(_ mono: AVAudioPCMBuffer) {
         queue.async { [self] in process(mono) }
     }
