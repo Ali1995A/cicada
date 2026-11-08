@@ -461,9 +461,9 @@ final class ListenEngine {
         let room = role == .room || settings.listensToRoom
         router.setRoomGate(room)
         router.setExternalSampleClock(false)
-        #if DEBUG && !CICADA_IOS
+        #if CICADA_WATCH_BRIDGE && !CICADA_IOS
         // Explicit developer opt-in; never silently replace a user's normal capture source.
-        if room, let path = ProcessInfo.processInfo.environment["CICADA_WATCH_PCM_FIFO"], !path.isEmpty {
+        if DevBuild.isDev, room, let path = ProcessInfo.processInfo.environment["CICADA_WATCH_PCM_FIFO"], !path.isEmpty {
             let input = WatchPCMSource(path: path)
             let router = self.router
             router.setExternalSampleClock(true)
@@ -512,7 +512,7 @@ final class ListenEngine {
         }
     }
 
-    #if DEBUG && !CICADA_IOS
+    #if CICADA_WATCH_BRIDGE && !CICADA_IOS
     private func finishWatchInput(clean: Bool) {
         guard !watchInputEnded else { return }
         watchInputEnded = true
@@ -611,7 +611,7 @@ final class ListenEngine {
     /// Whether the room is heard through the echo-cancelling unit right now.
     var hearsEchoCancelled: Bool { audioTap is EchoCancelledRoomMic }
     var isWatchInput: Bool {
-        #if DEBUG && !CICADA_IOS
+        #if CICADA_WATCH_BRIDGE && !CICADA_IOS
         return audioTap is WatchPCMSource
         #else
         return false
@@ -645,7 +645,7 @@ final class ListenEngine {
     func setRoomMuted(_ on: Bool) {
         guard on != roomMuted else { return }
         roomMuted = on
-        #if DEBUG && !CICADA_IOS
+        #if CICADA_WATCH_BRIDGE && !CICADA_IOS
         (audioTap as? WatchPCMSource)?.setMuted(on)
         #endif
         (audioTap as? RoomMic)?.muted = on

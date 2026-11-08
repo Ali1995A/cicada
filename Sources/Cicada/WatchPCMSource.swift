@@ -1,6 +1,6 @@
 // Developer-only bridge: authenticated HTTPS receiver -> private FIFO -> normal recognition.
 // Not a network listener; no model key or alternative AI client lives here.
-#if DEBUG && !CICADA_IOS
+#if CICADA_WATCH_BRIDGE && !CICADA_IOS
 import AVFoundation
 import Darwin
 

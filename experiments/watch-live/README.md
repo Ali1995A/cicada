@@ -1,6 +1,6 @@
 # Watch → Mac live audio transport experiment
 
-**Status: unshipped experiment. Default is transport-only; optional DEBUG Mac recognition bridge is source-implemented, not native-verified.**
+**Status: unshipped experiment. Default is transport-only; optional opt-in development Mac recognition bridge is source-implemented, not native-verified.**
 It sends audio while recording instead of waiting for the meeting to end.
 The Mac receiver acknowledges each PCM frame and prints only sequence, sample
 count, duration, RMS and receipt time. By default it does not persist audio, call a model or feed Cicada. With the
@@ -107,7 +107,9 @@ existing compatible cloud service. The user must configure/authorize any externa
 service and its audio transmission themselves; this work performs no such calls.
 
 Manual development sequence:
-1. Build Cicada's DEBUG Mac app using its existing scripts on a supported Mac.
+1. Build the Mac development app with `WATCH_BRIDGE=1 scripts/build.sh` on a
+   supported Mac. The script adds CICADA_WATCH_BRIDGE and rejects RELEASE=1;
+   runtime also requires DevBuild.isDev. Normal builds omit this source.
 2. In a private directory owned by the current user, create a FIFO with mode 0600:
    `mkfifo -m 600 /private/path/watch.pcm`. Both ends reject other permissions,
    other owners and a symlink at that final path. Do not use a public shared path.
