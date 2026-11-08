@@ -1,7 +1,8 @@
 #!/usr/bin/env python3
 """Experimental Watch -> Mac live transport probe. NOT the Cicada recognizer.
 Run explicitly with a certificate trusted by the Watch. No TLS bypass.
-Only prints frame metadata; audio and tokens are never written to disk.
+Prints frame metadata; optional private FIFO feeds Cicada recognition.
+No audio files are written here; pairing tokens use temporary 0600 files.
 """
 import argparse
 import hmac

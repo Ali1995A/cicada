@@ -2,13 +2,6 @@ name: Apple live input validation
 on:
   push:
     branches: [feat/apple-recording-handoff]
-  pull_request:
-    paths:
-      - 'Sources/**'
-      - 'Tests/**'
-      - 'experiments/watch-live/**'
-      - 'scripts/**'
-      - '.github/workflows/apple-live-validation.yml'
   workflow_dispatch:
 permissions:
   contents: read

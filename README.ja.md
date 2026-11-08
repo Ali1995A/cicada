@@ -176,15 +176,7 @@ scripts/package.sh          # 打包正式版 DMG、zip 和 SHA-256 校验值
 
 本プロジェクトは [Apache-2.0](LICENSE) ライセンスのもとで公開されています。仮想マイクドライバーの BlackHole 2ch は GPL ライセンスであり、インストーラーには同梱されず、インストールをクリックした際に公式の配布元からダウンロードされます。同梱の声紋モデルは [WeSpeaker](https://github.com/wenet-e2e/wespeaker) が VoxCeleb で学習した ResNet34-LM（CC BY 4.0 ライセンス）で、`scripts/convert-voiceprint.py` によって Core ML に変換されています。
 
-## Apple 録音連携の開発ブランチ
 
-Mac の読み込み音声コピー保存、実験的な iPhone 音声共有、カスタム API URL 検証を追加します。Apple Watch はボイスメモの対応する書き出し手順を使用します。Watch アプリやリアルタイム転送は含みません。Apple 環境でのビルドと実機テストは未実施です。正式版として扱わないでください。[連携ガイド](docs/apple-recording-handoff.md)。
+## Apple live input development
 
-## Live input prototype
-
-開発ブランチでは、iPhone の連係マイクや AirPods を Mac のリアルタイム認識に使う入力選択を追加しています。ネイティブビルドと実機検証は未完了です。Apple Watch のライブ転送は未実装です。 [Details](docs/apple-recording-handoff.md)
-
-
-## Watch transport experiment
-
-[Watch ライブ転送実験](experiments/watch-live/README.md)を追加しました。録音中に PCM 分割を Mac に送りますが、認識への接続、watchOS ビルドと実機検証は未完了です。利用可能な Watch ライブ字幕ではありません。
+開発ブランチに iPhone 連係／AirPods の会議入力選択、読み込みコピー保持、API URL 検証、明示的に有効化する Watch→Mac ライブ認識ブリッジを追加しています。Watch の配布、ペアリング、実機バックグラウンド動作は未検証です。正式版ではありません。[案内](docs/apple-recording-handoff.md)。

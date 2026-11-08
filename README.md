@@ -176,15 +176,7 @@ scripts/package.sh          # 打包正式版 DMG、zip 和 SHA-256 校验值
 
 本项目采用 [Apache-2.0](LICENSE) 协议开源。虚拟麦克风驱动 BlackHole 2ch 采用 GPL 协议，不打包在安装包内，点安装时从其官方地址下载。随附的声纹模型是 [WeSpeaker](https://github.com/wenet-e2e/wespeaker) 在 VoxCeleb 上训练的 ResNet34-LM（CC BY 4.0 协议），由 `scripts/convert-voiceprint.py` 转为 Core ML。
 
-## Apple 录音接入开发分支
 
-此分支增加 Mac 导入录音副本留存、实验性 iPhone 录音分享及自定义 API 地址校验。Apple Watch 可通过语音备忘录的受支持导出流程提供文件；没有原生手表 App 或实时传输。代码尚未经过 Apple 环境编译和真机验证，暂勿作为正式版本安装。流程、API 配置和验证限制见 [接入说明](docs/apple-recording-handoff.md)。
+## Apple live input development
 
-## Live input prototype
-
-开发分支新增会议收音设备选择：iPhone 连续互通麦克风或 AirPods 接入 Mac 的实时识别链路。尚未原生编译/真机验收；Apple Watch 实时传输未实现。 [Details](docs/apple-recording-handoff.md)
-
-
-## Watch transport experiment
-
-Watch 开发实验已加入 [实时音频传输验证](experiments/watch-live/README.md)：边录边向 Mac 发送短 PCM 分段，尚未接入识别或完成 Watch 编译/真机验证，不是可用的手表实时字幕功能。
+本开发分支提供会议收音设备选择（iPhone 连续互通或 AirPods）、导入副本保留与 API 地址校验，并包含可显式启用的 Watch→Mac 实时识别开发桥接。Watch 安装、配对与真机后台行为仍待验证，不是正式发布。见 [Apple 接入说明](docs/apple-recording-handoff.md)。

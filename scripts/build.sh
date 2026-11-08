@@ -16,7 +16,7 @@ if [[ "${WATCH_BRIDGE:-}" == 1 ]]; then
   fi
   WATCH_FLAGS=(-Xswiftc -DCICADA_WATCH_BRIDGE)
 fi
-swift build -c release --arch "$ARCH" --product Cicada "${WATCH_FLAGS[@]}"
+swift build -c release --arch "$ARCH" --product Cicada ${WATCH_FLAGS[@]+"${WATCH_FLAGS[@]}"}
 swift build -c release --product CicadaIcon
 BIN=$(swift build -c release --arch "$ARCH" --show-bin-path)
 HOST_BIN=$(swift build -c release --show-bin-path)
