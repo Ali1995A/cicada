@@ -452,7 +452,7 @@ sealed class Controller
             });
         };
         HybridMicDenied = false;
-        RoomListen.Join(mic, id, session.StartedAt);
+        RoomListen.Join(mic, id, session.StartedAt, Listen.Mix);
         Log.Debug("hybrid: room side started");
     }
 

@@ -694,6 +694,9 @@ final class AppModel: ObservableObject {
         if settings.recordAudio {
             listen.router.setRecording(store.systemAudioURL(session.id))
             speak.setRecording(store.micAudioURL(session.id))
+            // Here, not when the mic opens: one clock with the Mac's audio, and opening the mic
+            // again mid-meeting must not start the file over.
+            roomListen.router.setRecording(store.roomAudioURL(session.id))
         }
         listen.start()
         if listen.isRunning, settings.hearsBoth { startRoomSide() }
@@ -716,6 +719,7 @@ final class AppModel: ObservableObject {
         stopRoomSide()
         listen.stop()
         listen.router.setRecording(nil)
+        roomListen.router.setRecording(nil)
         speak.setRecording(nil)
         if let held = heldJoin {
             heldJoin = nil
