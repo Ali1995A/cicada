@@ -546,7 +546,7 @@
   "share_js_locked": "Too many wrong passwords: this link is locked",
   "share_js_gone_p": "It has been deleted from the server. Cicada turns any meeting in another language into live bilingual subtitles and notes.",
   "share_js_missing_p": "The link may be incomplete. Cicada turns any meeting in another language into live bilingual subtitles and notes.",
-  "share_js_locked_p": "Ask the sharer to share it again.",
+  "share_js_locked_p": "Try again in 24 hours, or ask the sharer to share it again.",
   "share_js_wrong": "That password is wrong",
   "share_js_wait": "Too many tries: try again in {s} s",
   "share_js_error": "Can't open it right now. Try again later.",

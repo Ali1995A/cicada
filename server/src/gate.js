@@ -5,8 +5,9 @@
 import { DurableObject } from "cloudflare:workers";
 
 // Wrong passwords for one share: free for the first few, then each waits twice as long; at most
-// HOURLY an hour, and LOCK_AT in all locks the link for good (the owner shares it again).
-const FREE = 5, HOURLY = 20, LOCK_AT = 100;
+// HOURLY an hour, and LOCK_AT in all locks the link for LOCK_FOR seconds. Not for good: anyone with
+// the link could otherwise lock it on purpose and leave the people it was meant for shut out.
+const FREE = 5, HOURLY = 20, LOCK_AT = 100, LOCK_FOR = 86400;
 
 export class Gate extends DurableObject {
   /** Fixed-window limit: true while fewer than `limit` hits fell in this `window` seconds. */
@@ -37,15 +38,20 @@ export class Gate extends DurableObject {
   }
 
   async stats() {
-    const a = (await this.ctx.storage.get("attempts")) || { fails: 0 };
-    return { views: (await this.ctx.storage.get("views")) || 0, wrongPasswords: a.fails, locked: a.fails >= LOCK_AT };
+    const a = (await this.ctx.storage.get("attempts")) || { fails: 0, last: 0 };
+    const locked = a.fails >= LOCK_AT && Date.now() / 1000 - a.last < LOCK_FOR;
+    return { views: (await this.ctx.storage.get("views")) || 0, wrongPasswords: a.fails, locked };
   }
 
   /** May a password be tried now? */
   async mayTry() {
     const t = Date.now() / 1000;
     const a = (await this.ctx.storage.get("attempts")) || { fails: 0, last: 0, hour: t, inHour: 0 };
-    if (a.fails >= LOCK_AT) return { ok: false, locked: true };
+    if (a.fails >= LOCK_AT) {
+      if (t - a.last < LOCK_FOR) return { ok: false, locked: true, retryAfter: Math.ceil(a.last + LOCK_FOR - t) };
+      a.fails = 0;
+      await this.ctx.storage.put("attempts", a);
+    }
     if (t - a.hour >= 3600) { a.hour = t; a.inHour = 0; }
     if (a.inHour >= HOURLY) return { ok: false, retryAfter: Math.ceil(a.hour + 3600 - t) };
     const wait = a.fails < FREE ? 0 : Math.min(3600, 2 ** (a.fails - FREE));

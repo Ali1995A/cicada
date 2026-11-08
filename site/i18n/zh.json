@@ -546,7 +546,7 @@
   "share_js_locked": "密码试错次数太多，链接已锁定",
   "share_js_gone_p": "内容已从服务器删除。知了能把任何外语会议实时转成双语字幕和纪要。",
   "share_js_missing_p": "链接可能不完整。知了能把任何外语会议实时转成双语字幕和纪要。",
-  "share_js_locked_p": "请分享者重新分享一次。",
+  "share_js_locked_p": "24 小时后再试，或请分享者重新分享。",
   "share_js_wrong": "密码不对",
   "share_js_wait": "试的次数太多，{s} 秒后再试",
   "share_js_error": "暂时打不开，请稍后再试",
