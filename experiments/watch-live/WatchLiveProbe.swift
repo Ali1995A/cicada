@@ -97,11 +97,11 @@ final class WatchProbe: ObservableObject {
                         throw ProbeFailure(message: "确认序号不符，存在音频缺口")
                     }
                     sequence += 1
-                    status = "Mac 已确认 \(sequence) 段 · 仅音频传输"
+                    status = "传输层已接收 \(sequence) 段 · 非识别确认"
                 }
                 _ = try await request("end/\(sid)")
                 remote = nil
-                status = "已结束，全部排队音频已确认"
+                status = "传输已结束；请在 Mac 检查字幕收尾"
             } catch {
                 if generation == id { status = "已停止：\(error.localizedDescription)；可能有未送达音频" }
             }

@@ -81,6 +81,9 @@ final class AudioRouter: @unchecked Sendable {
     /// The recording keeps the meeting's clock (the lines' times): when it began and what is written.
     private var recordStart: Date?
     private var recordedFrames: AVAudioFramePosition = 0
+    private var externalSampleClock = false
+    /// Batched remote PCM already contains silence; do not add network delay to its recording.
+    func setExternalSampleClock(_ on: Bool) { queue.sync { externalSampleClock = on } }
 
     /// When a block counts as speech (pauses, language detection, the silence that ends a meeting).
     func setRoomGate(_ on: Bool) {
@@ -149,7 +152,7 @@ final class AudioRouter: @unchecked Sendable {
         }
         // A process tap sends nothing while the Mac is silent: the gap goes in as silence, or every
         // later line's time would point past its words in the recording.
-        if let recordStart {
+        if let recordStart, !externalSampleClock {
             let rate = buffer.format.sampleRate
             let due = (Date().timeIntervalSince(recordStart) * rate).rounded() - Double(buffer.frameLength)
             let behind = due - Double(recordedFrames)

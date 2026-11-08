@@ -456,18 +456,21 @@ final class ListenEngine {
         audioTap = nil
         let room = role == .room || settings.listensToRoom
         router.setRoomGate(room)
-        #if DEBUG
+        router.setExternalSampleClock(false)
+        #if DEBUG && !CICADA_IOS
         // Explicit developer opt-in; never silently replace a user's normal capture source.
         if room, let path = ProcessInfo.processInfo.environment["CICADA_WATCH_PCM_FIFO"], !path.isEmpty {
             let input = WatchPCMSource(path: path)
             let router = self.router
+            router.setExternalSampleClock(true)
+            input.setMuted(roomMuted)
             input.isReady = { router.acceptsExternalAudio }
             input.onAudio = { pcm in router.push(pcm) }
             input.onEnded = { [weak self, weak input] clean in
                 DispatchQueue.main.async {
                     MainActor.assumeIsolated {
                         guard let self, let input, self.audioTap === input else { return }
-                        self.setStatus(clean ? L("手表录音已结束，正在完成识别") : L("手表连接中断，可能有未送达音频"))
+                        self.finishWatchInput(clean: clean)
                     }
                 }
             }
@@ -504,6 +507,25 @@ final class ListenEngine {
             return false
         }
     }
+
+    #if DEBUG && !CICADA_IOS
+    private func finishWatchInput(clean: Bool) {
+        let gen = generation
+        let stream = recognizer
+        let reader = resultsTask
+        tickTimer?.invalidate(); tickTimer = nil
+        // Queue barrier: feed all previously accepted PCM before ending the recognizer.
+        // Unlike stop(), finish() drains live and record recognizers rather than cancelling.
+        router.detach()
+        setStatus(clean ? L("手表录音已结束，正在完成识别") : L("手表连接中断，可能有未送达音频"))
+        Task { [weak self] in
+            await stream?.finish()
+            await reader?.value
+            guard let self, self.isRunning, self.generation == gen else { return }
+            self.setStatus(clean ? L("手表识别收尾完成，请结束会议") : L("已处理收到的音频，请检查缺失并结束会议"))
+        }
+    }
+    #endif
 
     /// 会议室. The first time, macOS asks for the microphone; listening starts once it is allowed.
     private func startRoomMic() -> Bool {
@@ -609,6 +631,9 @@ final class ListenEngine {
     func setRoomMuted(_ on: Bool) {
         guard on != roomMuted else { return }
         roomMuted = on
+        #if DEBUG && !CICADA_IOS
+        (audioTap as? WatchPCMSource)?.setMuted(on)
+        #endif
         (audioTap as? RoomMic)?.muted = on
         (audioTap as? EchoCancelledRoomMic)?.muted = on
         if role == .room || settings.listensToRoom { debugLog("room mic \(on ? "muted" : "open")") }

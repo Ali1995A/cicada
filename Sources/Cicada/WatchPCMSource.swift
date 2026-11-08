@@ -1,6 +1,6 @@
 // Developer-only bridge: authenticated HTTPS receiver -> private FIFO -> normal recognition.
 // Not a network listener; no model key or alternative AI client lives here.
-#if DEBUG
+#if DEBUG && !CICADA_IOS
 import AVFoundation
 import Darwin
 
@@ -16,6 +16,8 @@ final class WatchPCMSource: AudioSource, @unchecked Sendable {
     private var received = false
     private var lastData = Date()
     private var running = false
+    private var muted = false
+    func setMuted(_ on: Bool) { queue.sync { muted = on } }
     private let format = AVAudioFormat(commonFormat: .pcmFormatFloat32, sampleRate: 16000, channels: 1, interleaved: false)!
 
     init(path: String) { self.path = path }
@@ -108,7 +110,7 @@ final class WatchPCMSource: AudioSource, @unchecked Sendable {
                 out.frameLength = AVAudioFrameCount(samples)
                 for i in 0..<samples {
                     let value = UInt16(pcm[offset + i * 2]) | (UInt16(pcm[offset + i * 2 + 1]) << 8)
-                    channel[0][i] = Float(Int16(bitPattern: value)) / 32768
+                    channel[0][i] = muted ? 0 : Float(Int16(bitPattern: value)) / 32768
                 }
                 onAudio?(out)
                 offset += samples * 2

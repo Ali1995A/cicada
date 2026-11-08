@@ -1,10 +1,11 @@
 # Watch → Mac live audio transport experiment
 
-**Status: isolated, unshipped experiment. This is NOT speech recognition.**
+**Status: unshipped experiment. Default is transport-only; optional DEBUG Mac recognition bridge is source-implemented, not native-verified.**
 It sends audio while recording instead of waiting for the meeting to end.
 The Mac receiver acknowledges each PCM frame and prints only sequence, sample
-count, duration, RMS and receipt time. It does not persist audio, call a model,
-feed Cicada's subtitles/records, or produce a meeting report.
+count, duration, RMS and receipt time. By default it does not persist audio, call a model or feed Cicada. With the
+explicit native bridge below, accepted PCM feeds Cicada's existing recognition,
+subtitle and record callbacks; Python still never calls a model.
 
 ## Why this experiment exists
 The requested final product is Watch/iPhone live capture with Mac recognition,
@@ -85,14 +86,60 @@ Sources:
 
 ## Verification, 2026-11-08
 Executed in cloud Linux/Python 3.12 with synthetic zero PCM, no real microphones,
-keys or model calls: 5 protocol tests + 5 loopback HTTP tests passed.
+keys or model calls: 5 protocol + 7 loopback HTTP + 4 real POSIX FIFO tests passed (16 total).
 The tests were run using the exact source text loaded as in-memory modules.
 The HTTP test harness intentionally uses loopback cleartext; the command-line
 receiver has no cleartext option. **TLS/device interoperability was not tested.**
 Swift/watchOS compilation, full Cicada suite, native runtime and 1-hour battery/
 background tests were **not run**. No claim of end-to-end transcription.
 
-Next: watchOS SDK compilation and audio/TLS device tests, then integrate accepted
-PCM into the Mac native recognition pipeline with session-scoped authentication,
-sample timestamps, continuity/gap handling, bounded buffering and appropriate
-recording-retention controls. This must not be advertised as released Watch support.
+Next: native compilation and Watch/Mac audio/TLS device acceptance, a user-facing
+pairing/setup flow, end-to-end acknowledgement, capture timestamps and retention controls. This must not be advertised as released Watch support.
+
+## Optional Mac native recognition bridge (developer-only, not released)
+
+Source path: `Sources/Cicada/WatchPCMSource.swift` → `AudioRouter` →
+`ListenEngine` → the configured `RecognitionStream` →
+existing subtitle / record callbacks. When custom ASR is selected, this is the
+existing CloudStream/TranslationService/LingClient path, not a Python model call.
+On Apple silicon, choose local speech recognition initially; Intel requires the
+existing compatible cloud service. The user must configure/authorize any external
+service and its audio transmission themselves; this work performs no such calls.
+
+Manual development sequence:
+1. Build Cicada's DEBUG Mac app using its existing scripts on a supported Mac.
+2. In a private directory owned by the current user, create a FIFO with mode 0600:
+   `mkfifo -m 600 /private/path/watch.pcm`. Both ends reject other permissions,
+   other owners and a symlink at that final path. Do not use a public shared path.
+3. Launch the development app with environment variable
+   `CICADA_WATCH_PCM_FIFO=/private/path/watch.pcm`. Select **Room** listening.
+   This variable is ignored by release builds. Begin listening and let the speech
+   model load before starting Watch capture. No automatic fallback to another
+   microphone occurs if the pipe cannot open.
+4. Start the HTTPS receiver with the previous TLS options plus
+   `--native-fifo /private/path/watch.pcm`, then start the Watch session.
+5. Watch receives transport-layer acknowledgements, **not ASR completion**.
+   Verify actual text arriving in the Mac's live captions and meeting notes.
+6. Stop Watch. Its final marker tells the Mac to call RecognitionStream.finish()
+   rather than cancelling; wait for the Mac's finish status before ending its
+   meeting. On a disconnect, received audio is drained but missing audio cannot
+   be recovered. A new meeting requires restarting the receiver/session.
+
+Mac mute is applied to PCM before recognition while preserving the sample clock;
+it does not physically stop Watch recording or network transmission. Use Watch's
+Stop to stop capture. The bridge records against received sample duration instead
+of adding network latency as wall-clock silence. Capture-origin timestamps and
+cross-device timeline alignment remain unverified; do not rely on exact timestamps.
+
+Readiness gates FIFO reading until a recognizer is attached. The kernel FIFO may
+still buffer small frames and return transport ACK before native consumption.
+The acknowledgement is deliberately not labelled recognition success; verify Mac
+results. Five-second bridge backpressure fails visibly rather than accumulating
+unlimited audio. No reconnect/second session is attached to the same ended bridge.
+
+### Updated verification boundary
+16 synthetic Python tests passed, including real private FIFO framing/permissions,
+reader disconnect and HTTP→FIFO delivery. No Swift SDK is available here: native
+bridge compilation, clean final-result drain, mute, language/model switching and
+on-device/cloud transcription have **not** been executed. A watchOS app build and
+real devices are still required. The feature is not yet a usable product release.

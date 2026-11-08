@@ -1393,3 +1393,10 @@
 "当前收音" = "Current audio input";
 "麦克风未启动" = "Microphone not active";
 "刷新设备" = "Refresh devices";
+
+/* Experimental Watch native bridge */
+"手表录音已结束，正在完成识别" = "Watch recording ended; finishing recognition";
+"手表连接中断，可能有未送达音频" = "Watch connection interrupted; audio may be missing";
+"手表音频管道无法启动" = "Watch audio pipe could not start";
+"手表识别收尾完成，请结束会议" = "Watch recognition drained; end the meeting";
+"已处理收到的音频，请检查缺失并结束会议" = "Received audio processed; check gaps and end the meeting";
