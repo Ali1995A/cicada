@@ -12,6 +12,8 @@ import secrets
 import ssl
 import struct
 import time
+import os
+import tempfile
 from http.server import BaseHTTPRequestHandler, HTTPServer
 from live_protocol import Session, ProtocolError, MAX_BYTES
 
@@ -46,12 +48,12 @@ class Handler(BaseHTTPRequestHandler):
             self.close_connection = True
     def handle_post(self):
         auth=self.headers.get("Authorization","")
-        if not hmac.compare_digest(auth, "Bearer "+self.server.token):
+        if not hmac.compare_digest(auth.encode("utf-8"), ("Bearer "+self.server.token).encode("ascii")):
             self.reply(401,{"error":"Unauthorized"});return
         if self.headers.get("Transfer-Encoding"):
             self.reply(400,{"error":"Content-Length required"});return
         length=self.headers.get("Content-Length","")
-        if not length.isdecimal():
+        if not length.isascii() or not length.isdecimal() or len(length) > 6:
             self.reply(400,{"error":"Invalid length"});return
         length=int(length)
         if length > MAX_BYTES:
@@ -111,9 +113,15 @@ def main():
         except Exception:
             sock.close();raise
     server.get_request=tls_request
-    print("EXPERIMENTAL TRANSPORT ONLY; no speech recognition. Pairing token (do not share):")
-    print(token,flush=True)
-    try: server.serve_forever()
-    except KeyboardInterrupt: pass
-    finally: server.server_close()
+    fd, token_path = tempfile.mkstemp(prefix="cicada-watch-pair-", suffix=".txt")
+    try:
+        os.fchmod(fd, 0o600)
+        with os.fdopen(fd, "w") as f: f.write(token)
+        print("EXPERIMENTAL TRANSPORT ONLY; no speech recognition.", flush=True)
+        print("Read the private 0600 pairing file locally; do not share: "+token_path, flush=True)
+        try: server.serve_forever()
+        except KeyboardInterrupt: pass
+    finally:
+        server.server_close()
+        os.unlink(token_path)
 if __name__=="__main__": main()

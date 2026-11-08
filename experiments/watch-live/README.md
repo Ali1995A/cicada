@@ -37,10 +37,10 @@ to this Watch app or bypass that architecture with Python API requests.
    Default bind is loopback only. To test across devices, explicitly select the
    Mac's private LAN address via `--bind <LAN-IP>`. No firewall changes, router
    forwarding or public exposure are performed. Keep the Mac awake.
-5. Enter the HTTPS origin (e.g. `https://mac.example:8443`) and newly printed
-   64-character pairing token on the Watch. Token stays in memory; restarting the
-   receiver rotates it. Do not screenshot/share it or redirect terminal output
-   into public logs. No API key is needed for this transport-only probe.
+5. Enter the HTTPS origin (e.g. `https://mac.example:8443`) and 64-character pairing token from
+   the private 0600 file whose path the receiver prints on the Watch. Watch keeps the token only in memory. The Mac removes its temporary pairing
+   file on a clean shutdown; a new run creates a new token. Do not screenshot
+   or share the file. Crash leftovers cannot authenticate to a new receiver. No API key is needed for this transport-only probe.
 6. Press Start. Confirm increasing sequence numbers on **both** devices while
    speaking. Press Stop; wait for the final confirmation. Frame metadata and RMS
    establish delivery, **not** recognizer accuracy, complete audio fidelity or
@@ -85,7 +85,7 @@ Sources:
 
 ## Verification, 2026-11-08
 Executed in cloud Linux/Python 3.12 with synthetic zero PCM, no real microphones,
-keys or model calls: 5 protocol tests + 3 loopback HTTP tests passed.
+keys or model calls: 5 protocol tests + 5 loopback HTTP tests passed.
 The tests were run using the exact source text loaded as in-memory modules.
 The HTTP test harness intentionally uses loopback cleartext; the command-line
 receiver has no cleartext option. **TLS/device interoperability was not tested.**

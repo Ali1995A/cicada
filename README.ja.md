@@ -183,3 +183,8 @@ Mac の読み込み音声コピー保存、実験的な iPhone 音声共有、�
 ## Live input prototype
 
 開発ブランチでは、iPhone の連係マイクや AirPods を Mac のリアルタイム認識に使う入力選択を追加しています。ネイティブビルドと実機検証は未完了です。Apple Watch のライブ転送は未実装です。 [Details](docs/apple-recording-handoff.md)
+
+
+## Watch transport experiment
+
+[Watch ライブ転送実験](experiments/watch-live/README.md)を追加しました。録音中に PCM 分割を Mac に送りますが、認識への接続、watchOS ビルドと実機検証は未完了です。利用可能な Watch ライブ字幕ではありません。

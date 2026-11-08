@@ -174,8 +174,9 @@ private final class Capture: @unchecked Sendable {
                 self.closed = true; self.lock.unlock()
                 self.continuation.finish(throwing: ProbeFailure(message: "音频处理积压，已停录")); return
             }
-            self.pending += 1; self.lock.unlock()
+            self.pending += 1
             guard let copy = AVAudioPCMBuffer(pcmFormat: buffer.format, frameCapacity: buffer.frameLength) else {
+                self.pending -= 1; self.lock.unlock()
                 self.fail(ProbeFailure(message: "无法分配音频缓冲")); return
             }
             copy.frameLength = buffer.frameLength
@@ -188,12 +189,15 @@ private final class Capture: @unchecked Sendable {
                 defer { self.lock.lock(); self.pending -= 1; self.lock.unlock() }
                 self.convert(copy)
             }
+            self.lock.unlock()
         }
     }
 
     private func convert(_ source: AVAudioPCMBuffer) {
         let capacity = AVAudioFrameCount(ceil(Double(source.frameLength) * 16000 / source.format.sampleRate)) + 32
-        guard let converter, let out = AVAudioPCMBuffer(pcmFormat: output, frameCapacity: capacity) else { return }
+        guard let converter, let out = AVAudioPCMBuffer(pcmFormat: output, frameCapacity: capacity) else {
+            fail(ProbeFailure(message: "无法创建转换缓冲")); return
+        }
         var supplied = false
         var error: NSError?
         let result = converter.convert(to: out, error: &error) { _, state in
@@ -223,7 +227,9 @@ private final class Capture: @unchecked Sendable {
         guard let converter else { return }
         // Preserve the resampler tail rather than silently cutting the final samples.
         for _ in 0..<16 {
-            guard let out = AVAudioPCMBuffer(pcmFormat: output, frameCapacity: 4096) else { break }
+            guard let out = AVAudioPCMBuffer(pcmFormat: output, frameCapacity: 4096) else {
+                fail(ProbeFailure(message: "无法创建末段缓冲")); return
+            }
             var error: NSError?
             let result = converter.convert(to: out, error: &error) { _, state in
                 state.pointee = .endOfStream; return nil
@@ -237,17 +243,19 @@ private final class Capture: @unchecked Sendable {
             while bytes.count >= 128000 {
                 emit(Data(bytes.prefix(128000))); bytes.removeFirst(128000)
             }
-            if result == .endOfStream || out.frameLength == 0 { break }
+            if result == .endOfStream || out.frameLength == 0 { return }
         }
+        fail(ProbeFailure(message: "末段转换未在上限内完成"))
     }
 
     func finish() {
-        lock.lock(); closed = true; lock.unlock()
+        lock.lock(); closed = true
         queue.async {
             self.flushConverter()
             if !self.bytes.isEmpty { self.emit(self.bytes); self.bytes.removeAll() }
             self.continuation.finish()
         }
+        lock.unlock()
     }
 
     func fail(_ error: Error) {

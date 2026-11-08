@@ -183,3 +183,8 @@ scripts/package.sh          # 打包正式版 DMG、zip 和 SHA-256 校验值
 ## Live input prototype
 
 开发分支新增会议收音设备选择：iPhone 连续互通麦克风或 AirPods 接入 Mac 的实时识别链路。尚未原生编译/真机验收；Apple Watch 实时传输未实现。 [Details](docs/apple-recording-handoff.md)
+
+
+## Watch transport experiment
+
+Watch 开发实验已加入 [实时音频传输验证](experiments/watch-live/README.md)：边录边向 Mac 发送短 PCM 分段，尚未接入识别或完成 Watch 编译/真机验证，不是可用的手表实时字幕功能。

@@ -183,3 +183,8 @@ This branch adds retained Mac import copies, experimental iPhone audio sharing, 
 ## Live input prototype
 
 This development branch adds a meeting input picker for an iPhone Continuity microphone or AirPods feeding Mac live recognition. Native build/device validation is pending; Apple Watch live streaming is not implemented. [Details](docs/apple-recording-handoff.md)
+
+
+## Watch transport experiment
+
+A separate [Watch live transport experiment](experiments/watch-live/README.md) now sends PCM chunks during recording. It does not integrate recognition and has not been watchOS-built or device-tested; this is not usable Watch live captions.

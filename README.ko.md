@@ -183,3 +183,8 @@ Mac 가져오기 사본 보관, 실험적인 iPhone 녹음 공유 및 사용자 
 ## Live input prototype
 
 개발 브랜치에 iPhone 연속성 마이크 또는 AirPods를 Mac 실시간 인식에 연결하는 입력 선택을 추가했습니다. 네이티브 빌드와 실기기 검증은 아직이며 Apple Watch 실시간 전송은 구현되지 않았습니다. [Details](docs/apple-recording-handoff.md)
+
+
+## Watch transport experiment
+
+별도의 [Watch 실시간 전송 실험](experiments/watch-live/README.md)을 추가했습니다. 녹음 중 PCM 조각을 Mac으로 보내지만 인식 통합, watchOS 빌드 및 실기기 검증은 아직입니다. 사용 가능한 Watch 실시간 자막 기능은 아닙니다.

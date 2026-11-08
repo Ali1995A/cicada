@@ -21,11 +21,17 @@ class ReceiverTests(unittest.TestCase):
   self.assertEqual(self.events[0]["samples"],32000)
   self.assertEqual(self.post(path,b"\0"*64000)[0],409)
   self.assertEqual(self.post("/end/"+sid)[0],200)
+ def test_non_ascii_auth_is_rejected(self):
+  self.assertEqual(self.post("/session",token="é")[0],401)
  def test_malformed_does_not_emit(self):
   _,j=self.post("/session");sid=j["session"]
   self.assertEqual(self.post("/pcm/"+sid+"/0",b"x")[0],400)
   self.assertEqual(self.events,[])
   self.assertEqual(self.post("/pcm/"+sid+"/0",b"\0\0")[0],200)
+ def test_pathological_content_length(self):
+  c=http.client.HTTPConnection(*self.s.server_address,timeout=2)
+  c.request("POST","/session",b"",{"Authorization":"Bearer "+"a"*64,"Content-Length":"9"*5000})
+  r=c.getresponse();self.assertEqual(r.status,400);r.read();c.close()
  def test_oversize_and_wrong_path(self):
   self.assertEqual(self.post("/session",b"x"*128001)[0],413)
   self.assertEqual(self.post("/not-real")[0],404)

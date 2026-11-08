@@ -13,7 +13,7 @@ Cicada already has a Mac live microphone pipeline (RoomMic → ListenEngine → 
 | iPhone near Mac | Use Apple's Continuity microphone as a Mac audio input. This branch adds an explicit meeting input picker; actual device integration has not been tested. |
 | AirPods paired with Mac | Select AirPods explicitly as the meeting input. Automatic mode still prefers a room/table microphone, to avoid unexpectedly switching to a headset. |
 | iPhone running Cicada | Existing iOS app recognizes on the phone. A direct iOS-app-to-Mac audio streaming protocol has NOT been implemented. |
-| Apple Watch | No watchOS client or live audio relay has been implemented. Voice Memos file synchronization is NOT realtime recognition. |
+| Apple Watch | An isolated [live PCM transport probe](../experiments/watch-live/README.md) has been added. It is not built/tested on watchOS and is NOT connected to recognition. Voice Memos synchronization is NOT realtime recognition. |
 | iPhone/Watch completed recording | Export/share and Mac import remain the offline fallback. |
 
 ### iPhone → Mac using Continuity microphone
@@ -63,9 +63,13 @@ Models must be chosen from the actual provider's supported catalog; this branch 
 - After the retention change is implemented, remove only a disposable duplicate of the source and prove the imported recording still plays and can be retranscribed.
 - Verify generated notes contain only meeting deliverable content; manually review decisions, owners, deadlines and uncertain words against the recording.
 
-## Static verification of this prototype
+## Historical static verification of the earlier offline prototype
 
 Nine changed Swift files parsed with tree-sitter-swift without syntax errors. `git diff --check` and `scripts/check-agents.py` pass. These checks do not resolve Swift types, actor isolation, Apple framework availability, macros, or runtime behavior; native builds and tests remain required. Importing copies the entire source file (including video if selected), so allow sufficient free disk space. Existing imported records remain backward-compatible and retain their old source paths; they are not silently migrated.
 
 The new API URL validation also runs before saving the three endpoint fields to ordinary settings. It does not migrate or erase previously saved values. Native localization extraction (`scripts/strings.py`) and iOS typechecking were attempted but blocked by missing Swift/xcrun; the five added text keys were checked in all four language tables. Static review caught and corrected sharing a partially rewrapped recording: an own-recording `.aac` sidecar now prevents sharing until finalization finishes.
 
+
+## Watch transport experiment update (2026-11-08)
+
+Cloud Python execution was restored for the isolated transport experiment. Ten synthetic protocol/loopback HTTP tests passed. No native Swift build, full Cicada suite or device test has run. The experiment sends audio during recording and only acknowledges/prints transport metadata, with HTTPS, a per-run private pairing token, bounded buffers and visible interruption failure. It does not yet provide Watch transcription, captions, notes, background guarantees or an installable watchOS target. See its README for the remaining integration and device acceptance work.
