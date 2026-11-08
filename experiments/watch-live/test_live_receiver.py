@@ -57,6 +57,14 @@ class ReceiverTests(unittest.TestCase):
   c.request("POST","/session",b"",{"Authorization":"Bearer "+"a"*64,"Content-Length":"9"*5000})
   r=c.getresponse();self.assertEqual(r.status,400);r.read();c.close()
  def test_oversize_and_wrong_path(self):
-  self.assertEqual(self.post("/session",b"x"*128001)[0],413)
+  c=http.client.HTTPConnection(*self.s.server_address,timeout=2)
+  try:
+   # Header-only rejection must not depend on TCP accepting a body the server refuses.
+   c.putrequest("POST","/session")
+   c.putheader("Authorization","Bearer "+"a"*64)
+   c.putheader("Content-Length","128001")
+   c.endheaders()
+   r=c.getresponse();self.assertEqual(r.status,413);r.read()
+  finally:c.close()
   self.assertEqual(self.post("/not-real")[0],404)
 if __name__=="__main__": unittest.main()

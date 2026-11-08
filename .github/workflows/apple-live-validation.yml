@@ -28,14 +28,18 @@ jobs:
       - name: Protocol and native FIFO tests
         run: python3 -m unittest discover -s experiments/watch-live -p 'test_*.py' -v
       - name: Baseline native unit suite
+        if: ${{ !cancelled() }}
         run: scripts/test.sh
       - name: Bridge-enabled native unit suite
+        if: ${{ !cancelled() }}
         run: scripts/test.sh -Xswiftc -DCICADA_WATCH_BRIDGE
       - name: Watch source typecheck
+        if: ${{ !cancelled() }}
         run: |
           xcrun --sdk watchsimulator swiftc -typecheck -parse-as-library -swift-version 5 \
             -target arm64-apple-watchos10.0-simulator \
             -sdk "$(xcrun --sdk watchsimulator --show-sdk-path)" \
             experiments/watch-live/WatchLiveProbe.swift
       - name: Build development app with bridge
+        if: ${{ !cancelled() }}
         run: WATCH_BRIDGE=1 scripts/build.sh
