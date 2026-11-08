@@ -63,6 +63,13 @@ export async function create(request, env) {
   const characters = JSON.stringify(doc).length;
   const wait = await limit(env, "review:" + who.device, REVIEW_CHARS_PER_DAY, 86400, characters);
   if (wait) return fail(429, "rate_limited", { retryAfter: wait });
+  // The whole site's review budget a day (Jev is paid per token): past it, sharing waits rather
+  // than skipping the review. Many devices from many addresses can't run up the bill past this.
+  const budget = Number(env.REVIEW_CHARS_PER_DAY_ALL || 50_000_000);
+  if (await limit(env, "review-all", budget, 86400, characters)) {
+    console.error("review: daily budget used up", budget);
+    return fail(503, "review_unavailable", { retryAfter: 3600 });
+  }
   let result;
   try {
     result = await review(env, doc);

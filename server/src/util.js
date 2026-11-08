@@ -44,9 +44,22 @@ export function now() {
   return Math.floor(Date.now() / 1000);
 }
 
-/** The visitor's address, hashed with a salt that changes every day: enough to rate-limit, not to track. */
+/**
+ * What a rate limit counts as one visitor: an IPv4 address, or an IPv6 /64. One home or phone
+ * usually gets a whole /64, so counting single IPv6 addresses would let anyone step past every
+ * per-address limit by picking another address from their own block.
+ */
+export function ipGroup(ip) {
+  if (!ip || !ip.includes(":")) return ip || "local";
+  const [head, tail = ""] = ip.toLowerCase().split("::");
+  const a = head ? head.split(":") : [], b = tail ? tail.split(":") : [];
+  const groups = ip.includes("::") ? [...a, ...Array(Math.max(0, 8 - a.length - b.length)).fill("0"), ...b] : a;
+  return groups.slice(0, 4).map((g) => g.replace(/^0+(?=.)/, "")).join(":") + "::/64";
+}
+
+/** The visitor's address (group), hashed with a salt that changes every day: enough to rate-limit, not to track. */
 export async function ipKey(request, env) {
-  const ip = request.headers.get("CF-Connecting-IP") || "local";
+  const ip = ipGroup(request.headers.get("CF-Connecting-IP"));
   const day = new Date().toISOString().slice(0, 10);
   return hex((await sha256(`${env.IP_SALT || "cicada"}|${day}|${ip}`)).slice(0, 12));
 }
