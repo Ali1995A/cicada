@@ -5,6 +5,37 @@ writes it from the `feat:` and `fix:` commits since the last tag, grouped by pla
 scope), and the release workflow publishes it as the release notes. Since 1.1.2 every release ships
 every platform (one with nothing new says No changes); earlier ones shipped only those listed. Lines under `## Unreleased` become the release's summary. The Chinese changelog for users is `site/changelog.json`.
 
+## 1.6.1 — 2026-11-08
+
+### Mac
+
+#### Fixed
+
+- With the microphone open, the meeting recording keeps your own voice too (#19) ([a4ecf97](https://github.com/wquguru/cicada/commit/a4ecf97be0c7c70561074b8c79cb298bc5fcebfa))
+
+### Windows
+
+#### Fixed
+
+- With the microphone open, the meeting recording keeps your own voice too (#19) ([677d2c7](https://github.com/wquguru/cicada/commit/677d2c756e5ea3869c78ffc7acd3f20f87a5e0b6))
+
+### Android
+
+No changes; released to keep every platform on the same version.
+
+### Linux
+
+#### Fixed
+
+- With the microphone open, the meeting recording keeps your own voice too (#19) ([5e78010](https://github.com/wquguru/cicada/commit/5e780105a1054d205a0399b78b8d3462e4894088))
+
+### Website
+
+- Text aimed at the sensitive-content check can't talk a key past it ([a79094b](https://github.com/wquguru/cicada/commit/a79094be72de9511a0d12e8d72f761c9c5ac8044))
+- Share limits count an IPv6 household as one visitor, and the whole site has a daily review budget ([952a170](https://github.com/wquguru/cicada/commit/952a170d8900887404f2a8c030518f6eb9224b95))
+- A password link locked by wrong guesses opens again after 24 hours ([d510067](https://github.com/wquguru/cicada/commit/d51006756b40234cca87f17dbba928358938ea74))
+- The sensitive-content check tries Cloudflare's Clef before Jev, which ZenMux refuses for mainland China ([4168864](https://github.com/wquguru/cicada/commit/4168864a3c2df185784b96b5749e276460c1e9c2))
+
 ## 1.6.0 — 2026-11-08
 
 ### Mac
