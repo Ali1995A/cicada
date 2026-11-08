@@ -1,0 +1,41 @@
+name: Apple live input validation
+on:
+  push:
+    branches: [feat/apple-recording-handoff]
+  pull_request:
+    paths:
+      - 'Sources/**'
+      - 'Tests/**'
+      - 'experiments/watch-live/**'
+      - 'scripts/**'
+      - '.github/workflows/apple-live-validation.yml'
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  mac-and-watch:
+    runs-on: macos-26
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - name: Toolchain
+        run: |
+          xcodebuild -version
+          swift --version
+          xcrun --sdk watchsimulator --show-sdk-path
+      - name: Protocol and native FIFO tests
+        run: python3 -m unittest discover -s experiments/watch-live -p 'test_*.py' -v
+      - name: Baseline native unit suite
+        run: scripts/test.sh
+      - name: Bridge-enabled native unit suite
+        run: scripts/test.sh -Xswiftc -DCICADA_WATCH_BRIDGE
+      - name: Watch source typecheck
+        run: |
+          xcrun --sdk watchsimulator swiftc -typecheck -parse-as-library -swift-version 5 \
+            -target arm64-apple-watchos10.0-simulator \
+            -sdk "$(xcrun --sdk watchsimulator --show-sdk-path)" \
+            experiments/watch-live/WatchLiveProbe.swift
+      - name: Build development app with bridge
+        run: WATCH_BRIDGE=1 scripts/build.sh
