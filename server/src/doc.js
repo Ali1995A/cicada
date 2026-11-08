@@ -76,19 +76,54 @@ export function notesText(notes) {
 }
 
 const LINES_PER_CHUNK = 40;
+// Clef on Workers AI reads only about the first 2K tokens of its input; 1,500 characters stays
+// under that even for Chinese (about a token per character), so nothing goes unread.
+export const PIECE_CHARS = 1500;
+const OVERLAP = 200; // a long line cut in two repeats this much, so a key on the cut is read whole
+
+function cut(text, size = PIECE_CHARS) {
+  if (text.length <= size) return [text];
+  const out = [];
+  for (let at = 0; at < text.length; at += size - OVERLAP) {
+    out.push(text.slice(at, at + size));
+    if (at + size >= text.length) break;
+  }
+  return out;
+}
 
 /**
- * What the review reads: the notes as one piece, the lines 40 at a time (Jev scores a whole state,
- * so a smaller piece tells the app where the problem is; tests showed no dilution up to 160 lines).
+ * What the review reads: the notes and the lines in pieces of at most PIECE_CHARS (and 40 lines),
+ * so the reviewer reads all of each, and a hit tells the app which lines to look at. Lines stay
+ * whole where they fit; a longer one is cut with an overlap.
  */
 export function chunks(doc) {
   const out = [];
   const notes = notesText(doc.notes);
-  if (notes) out.push({ part: "notes", text: `Title: ${doc.title}\n${notes}` });
-  for (let i = 0; i < doc.lines.length; i += LINES_PER_CHUNK) {
-    const slice = doc.lines.slice(i, i + LINES_PER_CHUNK);
-    const text = slice.map((l, k) => `[${i + k}] ${l.who}: ${l.src}` + (l.dst && l.dst !== l.src ? `\n    ${l.dst}` : "")).join("\n");
-    out.push({ part: "lines", from: i, to: i + slice.length - 1, text });
+  if (notes) {
+    const head = `Title: ${doc.title}\n`;
+    let buf = "";
+    const flush = () => { if (buf) out.push({ part: "notes", text: head + buf }); buf = ""; };
+    for (const row of notes.split("\n")) {
+      for (const piece of cut(row, PIECE_CHARS - head.length)) {
+        if (buf && buf.length + 1 + piece.length > PIECE_CHARS - head.length) flush();
+        buf = buf ? buf + "\n" + piece : piece;
+      }
+    }
+    flush();
   }
+  let from = 0, rows = [];
+  const flush = (to) => { if (rows.length) out.push({ part: "lines", from, to, text: rows.join("\n") }); rows = []; };
+  doc.lines.forEach((l, i) => {
+    const text = `[${i}] ${l.who}: ${l.src}` + (l.dst && l.dst !== l.src ? `\n    ${l.dst}` : "");
+    const size = rows.reduce((n, r) => n + r.length + 1, 0);
+    if (rows.length && (rows.length >= LINES_PER_CHUNK || size + text.length > PIECE_CHARS)) flush(i - 1);
+    if (!rows.length) from = i;
+    if (text.length > PIECE_CHARS) {
+      for (const piece of cut(text)) out.push({ part: "lines", from: i, to: i, text: piece });
+      return;
+    }
+    rows.push(text);
+  });
+  flush(doc.lines.length - 1);
   return out;
 }

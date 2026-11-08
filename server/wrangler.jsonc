@@ -19,6 +19,6 @@
   "durable_objects": { "bindings": [{ "name": "GATE", "class_name": "Gate" }] },
   "migrations": [{ "tag": "v1", "new_sqlite_classes": ["Gate"] }],
   "triggers": { "crons": ["17 3 * * *"] },
-  "vars": { "JEV_MODEL": "typesafe/jev-1.14", "SHARING": "on", "MIN_CLIENT": "0.0.0" },
+  "vars": { "REVIEW_MODELS": "cloudflare/clef-flash,typesafe/jev-1.14", "SHARING": "on", "MIN_CLIENT": "0.0.0" },
   "observability": { "enabled": true }
 }

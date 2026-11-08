@@ -35,3 +35,18 @@ test("talking to the reviewer tightens the bar for that piece only", () => {
   assert.deepEqual(flagged({ ...base, credential: 0.01 }, "key AKIAIOSFODNN7EXAMPLE"), ["credential"]);
   assert.equal(BLOCK, 0.85);
 });
+
+test("review pieces stay within what Clef reads, cover every line, and keep a key on a cut whole", async () => {
+  const { chunks, PIECE_CHARS } = await import("../src/doc.js");
+  const key = "sk-live-4f9a8c21de77b0a1cXYZ";
+  const long = "啊".repeat(1400) + ` key ${key} ` + "啊".repeat(1400);
+  const lines = Array.from({ length: 100 }, (_, i) => ({ t: i, who: "them", src: i === 50 ? long : "这是一句普通的会议发言，长度大概三十个字左右吧。", dst: i % 2 ? "An ordinary line." : null }));
+  const notes = { summary: "总结".repeat(900), topics: [{ title: "t", summary: "s", points: ["p"] }], conclusions: [], todos: [], terms: [] };
+  const parts = chunks({ title: "T", lines, notes });
+  assert.ok(parts.every((p) => p.text.length <= PIECE_CHARS));
+  const covered = new Set();
+  for (const p of parts.filter((p) => p.part === "lines")) for (let i = p.from; i <= p.to; i++) covered.add(i);
+  assert.equal(covered.size, 100);
+  assert.ok(parts.some((p) => p.text.includes(key)));
+  assert.ok(parts.filter((p) => p.part === "notes").length >= 2);
+});
