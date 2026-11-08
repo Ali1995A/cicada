@@ -5,6 +5,53 @@ writes it from the `feat:` and `fix:` commits since the last tag, grouped by pla
 scope), and the release workflow publishes it as the release notes. Since 1.1.2 every release ships
 every platform (one with nothing new says No changes); earlier ones shipped only those listed. Lines under `## Unreleased` become the release's summary. The Chinese changelog for users is `site/changelog.json`.
 
+## 1.6.0 — 2026-11-08
+
+### Mac
+
+#### New
+
+- Share a meeting as a link (Share…), checked for keys and other sensitive content before upload ([062f20f](https://github.com/wquguru/cicada/commit/062f20fd27259305a5cef48b0cdf3f5c422f199e))
+
+#### Fixed
+
+- Corrected words under Names and terms in the notes window no longer swap places every second ([b4215c5](https://github.com/wquguru/cicada/commit/b4215c5f64e95d57d7fe17e0e5cd8d874195910f))
+- Names and terms in the notes keep their place when the notes update ([e7a9735](https://github.com/wquguru/cicada/commit/e7a9735e2b674aa885eb5d2663868a8b7d03264e))
+
+### Windows
+
+#### New
+
+- Share a meeting as a link, checked for keys and other sensitive content before upload ([ad6b596](https://github.com/wquguru/cicada/commit/ad6b596162f286505da464f2588bdae21abcc501))
+
+#### Fixed
+
+- Names and terms in the notes keep their place when the notes update ([e7a9735](https://github.com/wquguru/cicada/commit/e7a9735e2b674aa885eb5d2663868a8b7d03264e))
+
+### Android
+
+#### New
+
+- Share a meeting as a link, checked for keys and other sensitive content before upload ([d9bb01d](https://github.com/wquguru/cicada/commit/d9bb01d0b902b6ed4fd53cef46a681d763cd693e))
+
+#### Fixed
+
+- Names and terms in the notes keep their place when the notes update ([e7a9735](https://github.com/wquguru/cicada/commit/e7a9735e2b674aa885eb5d2663868a8b7d03264e))
+
+### Linux
+
+#### New
+
+- Share a meeting as a link, checked for keys and other sensitive content before upload ([117a735](https://github.com/wquguru/cicada/commit/117a7351abfccd4ebc1af0aced0356fed4c84b48))
+
+#### Fixed
+
+- Names and terms in the notes keep their place when the notes update ([e7a9735](https://github.com/wquguru/cicada/commit/e7a9735e2b674aa885eb5d2663868a8b7d03264e))
+
+### Website
+
+- Shared meetings open as a page on cicada.indaloop.app, with a password page and link previews ([b278300](https://github.com/wquguru/cicada/commit/b278300c34f3d3ba1e84156b1eeaf6a5512e9696))
+
 ## 1.5.1 — 2026-11-07
 
 ### Mac
