@@ -79,7 +79,7 @@ struct Session: Codable, Identifiable, Equatable {
 }
 
 /// One folder per meeting under ~/Library/Application Support/LiveSubs/Sessions/<id>/:
-/// session.json, system.m4a (what you heard) and mic.m4a (what you said).
+/// session.json, system.m4a (what you heard, the room mic folded in) and mic.m4a (what you said).
 @MainActor
 final class SessionStore: ObservableObject {
     @Published private(set) var sessions: [Session] = []
@@ -102,6 +102,10 @@ final class SessionStore: ObservableObject {
     func folder(_ id: String) -> URL { root.appendingPathComponent(id, isDirectory: true) }
     func systemAudioURL(_ id: String) -> URL { folder(id).appendingPathComponent("system.m4a") }
     func micAudioURL(_ id: String) -> URL { folder(id).appendingPathComponent("mic.m4a") }
+    /// 电脑和会议室: the room mic, beside system.m4a on the meeting's clock until the meeting ends,
+    /// then folded into it (`finishAudio`), so a record still has one recording.
+    func roomAudioURL(_ id: String) -> URL { folder(id).appendingPathComponent("room.m4a") }
+    private func audioURLs(_ id: String) -> [URL] { [systemAudioURL(id), micAudioURL(id), roomAudioURL(id)] }
 
     private func load() {
         let dirs = (try? FileManager.default.contentsOfDirectory(at: root, includingPropertiesForKeys: nil)) ?? []
@@ -147,7 +151,7 @@ final class SessionStore: ObservableObject {
         let now = Date()
         sessions[i].endedAt = at.map { min(now, max(sessions[i].startedAt, $0)) } ?? now
         liveID = nil
-        sessions[i].hasAudio = [systemAudioURL(id), micAudioURL(id)].contains {
+        sessions[i].hasAudio = audioURLs(id).contains {
             FileManager.default.fileExists(atPath: $0.path) || FileManager.default.fileExists(atPath: AudioFileWriter.partial($0).path)
         }
         if sessions[i].lines.isEmpty {
@@ -158,8 +162,9 @@ final class SessionStore: ObservableObject {
                 return
             }
             // Only the recording: it plays, and is transcribed again, like an imported file.
-            let system = systemAudioURL(id)
-            let heard = [system, AudioFileWriter.partial(system)].contains { FileManager.default.fileExists(atPath: $0.path) }
+            let system = systemAudioURL(id), room = roomAudioURL(id)
+            let heard = [system, AudioFileWriter.partial(system), room, AudioFileWriter.partial(room)]
+                .contains { FileManager.default.fileExists(atPath: $0.path) }
             sessions[i].sourcePath = (heard ? system : micAudioURL(id)).path
         }
         saveNow(id)
@@ -167,15 +172,29 @@ final class SessionStore: ObservableObject {
     }
 
     private func hasPartialAudio(_ id: String) -> Bool {
-        [systemAudioURL(id), micAudioURL(id)].contains { FileManager.default.fileExists(atPath: AudioFileWriter.partial($0).path) }
+        audioURLs(id).contains { FileManager.default.fileExists(atPath: AudioFileWriter.partial($0).path) }
     }
 
     /// Turns the meeting's recordings into .m4a files (call after the recorders are closed).
     func finishAudio(_ id: String, until: Double? = nil) {
-        let urls = [systemAudioURL(id), micAudioURL(id)]
+        let urls = audioURLs(id), system = systemAudioURL(id), room = roomAudioURL(id)
         Task.detached(priority: .utility) {
             for u in urls { await AudioFileWriter.finish(u, until: until) }
+            Self.foldRoom(room, into: system)
             await self.markAudioFinished(id)
+        }
+    }
+
+    /// One recording per meeting, both sides in it: the room mic goes into system.m4a (or becomes
+    /// it, when the Mac played nothing). Waits while system.aac is left over from a cut rewrap:
+    /// the next launch finishes it and folds again.
+    nonisolated private static func foldRoom(_ room: URL, into system: URL) {
+        let fm = FileManager.default
+        guard fm.fileExists(atPath: room.path), !fm.fileExists(atPath: AudioFileWriter.partial(system).path) else { return }
+        if !fm.fileExists(atPath: system.path) {
+            try? fm.moveItem(at: room, to: system)
+        } else if AudioFileWriter.mix(room, into: system) {
+            try? fm.removeItem(at: room)
         }
     }
 

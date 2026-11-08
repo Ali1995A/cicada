@@ -852,7 +852,8 @@ struct MainWindowView: View {
         .onChange(of: current?.id, initial: true) { _, _ in loadPlayer() }
         // A meeting that ends while it is shown, and its recording once it is rewrapped into an .m4a.
         .onChange(of: store.liveID) { _, _ in loadPlayer() }
-        .onChange(of: store.audioFinished) { _, id in if id == current?.id { loadPlayer() } }
+        // Opened afresh: a file opened before the room was mixed in (#19) would play one side only.
+        .onChange(of: store.audioFinished) { _, id in if id == current?.id { player.unload(); loadPlayer() } }
         .onReceive(NotificationCenter.default.publisher(for: .debugPlay)) { n in
             if let t = n.object as? Double { player.play(from: t) }
         }
