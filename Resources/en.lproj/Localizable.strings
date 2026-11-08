@@ -1375,3 +1375,28 @@
 "去掉这些内容后就没有可分享的了。" = "Nothing would be left to share without these.";
 "这场会议没有可分享的内容。" = "This meeting has nothing to share.";
 "还有 %lld 处" = "And %lld more";
+
+"录音未能导入" = "Recording could not be imported";
+
+"无法保存录音副本，请检查文件和剩余空间后重试。" = "Could not save a copy of the recording. Check the file and available space, then retry.";
+
+"导出文字记录" = "Export transcript";
+
+"发送录音到 Mac" = "Send recording to Mac";
+
+"请输入 API 基础地址，不要包含用户名、密码、查询参数或片段。" = "Enter an API base URL without a username, password, query or fragment.";
+
+/* Live meeting inputs */
+"会议收音设备" = "Meeting audio input";
+"先关闭麦克风再切换；可选 iPhone 连续互通或 AirPods" = "Turn the microphone off before switching; choose iPhone Continuity or AirPods";
+"所选麦克风未连接，暂用自动" = "Selected microphone unavailable; using Automatic";
+"当前收音" = "Current audio input";
+"麦克风未启动" = "Microphone not active";
+"刷新设备" = "Refresh devices";
+
+/* Experimental Watch native bridge */
+"手表录音已结束，正在完成识别" = "Watch recording ended; finishing recognition";
+"手表连接中断，可能有未送达音频" = "Watch connection interrupted; audio may be missing";
+"手表音频管道无法启动" = "Watch audio pipe could not start";
+"手表识别收尾完成，请结束会议" = "Watch recognition drained; end the meeting";
+"已处理收到的音频，请检查缺失并结束会议" = "Received audio processed; check gaps and end the meeting";

@@ -8,7 +8,15 @@ set -euo pipefail
 cd "$(dirname "$0")/.."
 
 ARCH="${ARCH:-$(uname -m)}"
-swift build -c release --arch "$ARCH" --product Cicada
+WATCH_FLAGS=()
+if [[ "${WATCH_BRIDGE:-}" == 1 ]]; then
+  if [[ "${RELEASE:-}" == 1 ]]; then
+    echo "Watch bridge is experimental and cannot be included in a release." >&2
+    exit 1
+  fi
+  WATCH_FLAGS=(-Xswiftc -DCICADA_WATCH_BRIDGE)
+fi
+swift build -c release --arch "$ARCH" --product Cicada ${WATCH_FLAGS[@]+"${WATCH_FLAGS[@]}"}
 swift build -c release --product CicadaIcon
 BIN=$(swift build -c release --arch "$ARCH" --show-bin-path)
 HOST_BIN=$(swift build -c release --show-bin-path)

@@ -50,6 +50,8 @@ final class ListenEngine {
     let router = AudioRouter()
 
     private(set) var isRunning = false
+    private var watchInputEnded = false
+    private var watchDrainFailed = false
     private(set) var statusText = L("准备就绪")
     private(set) var activeLang: Lang?
     private(set) var languageConfirmed = false
@@ -342,6 +344,8 @@ final class ListenEngine {
             setStatus(L("请先在设置 › AI 服务里填入 Ling key"))
             return
         }
+        watchInputEnded = false
+        watchDrainFailed = false
         languageConfirmed = false
         pendingSwitch = nil
         needsDetection = true
@@ -456,6 +460,34 @@ final class ListenEngine {
         audioTap = nil
         let room = role == .room || settings.listensToRoom
         router.setRoomGate(room)
+        router.setExternalSampleClock(false)
+        #if CICADA_WATCH_BRIDGE && !CICADA_IOS
+        // Explicit developer opt-in; never silently replace a user's normal capture source.
+        if DevBuild.isDev, room, let path = ProcessInfo.processInfo.environment["CICADA_WATCH_PCM_FIFO"], !path.isEmpty {
+            let input = WatchPCMSource(path: path)
+            let router = self.router
+            router.setExternalSampleClock(true)
+            input.setMuted(roomMuted)
+            input.isReady = { router.acceptsExternalAudio }
+            input.onAudio = { pcm in router.push(pcm) }
+            input.onEnded = { [weak self, weak input] clean in
+                DispatchQueue.main.async {
+                    MainActor.assumeIsolated {
+                        guard let self, let input, self.audioTap === input else { return }
+                        self.finishWatchInput(clean: clean)
+                    }
+                }
+            }
+            do {
+                try input.start()
+                audioTap = input
+                return true
+            } catch {
+                setStatus(L("手表音频管道无法启动"))
+                return false // Never fall back to an unrelated microphone.
+            }
+        }
+        #endif
         if room { return startRoomMic() }
         if SystemAudioPermission.status() == .denied {
             debugLog("audio tap: system audio recording was refused")
@@ -479,6 +511,27 @@ final class ListenEngine {
             return false
         }
     }
+
+    #if CICADA_WATCH_BRIDGE && !CICADA_IOS
+    private func finishWatchInput(clean: Bool) {
+        guard !watchInputEnded else { return }
+        watchInputEnded = true
+        let gen = generation
+        let stream = recognizer
+        let reader = resultsTask
+        tickTimer?.invalidate(); tickTimer = nil
+        // Queue barrier: feed all previously accepted PCM before ending the recognizer.
+        // Unlike stop(), finish() drains live and record recognizers rather than cancelling.
+        router.detach()
+        setStatus(clean ? L("手表录音已结束，正在完成识别") : L("手表连接中断，可能有未送达音频"))
+        Task { [weak self] in
+            await stream?.finish()
+            await reader?.value
+            guard let self, self.isRunning, self.generation == gen, !self.watchDrainFailed else { return }
+            self.setStatus(clean ? L("手表识别收尾完成，请结束会议") : L("已处理收到的音频，请检查缺失并结束会议"))
+        }
+    }
+    #endif
 
     /// 会议室. The first time, macOS asks for the microphone; listening starts once it is allowed.
     private func startRoomMic() -> Bool {
@@ -557,6 +610,14 @@ final class ListenEngine {
     var holdsPlainMic: Bool { isRunning && audioTap is RoomMic }
     /// Whether the room is heard through the echo-cancelling unit right now.
     var hearsEchoCancelled: Bool { audioTap is EchoCancelledRoomMic }
+    var isWatchInput: Bool {
+        #if CICADA_WATCH_BRIDGE && !CICADA_IOS
+        return audioTap is WatchPCMSource
+        #else
+        return false
+        #endif
+    }
+
     /// The microphone hearing the room right now, to notice it going away (nil: the default input).
     var roomMicUID: String? { (audioTap as? RoomMic)?.deviceUID ?? (audioTap as? EchoCancelledRoomMic)?.deviceUID }
 
@@ -584,6 +645,9 @@ final class ListenEngine {
     func setRoomMuted(_ on: Bool) {
         guard on != roomMuted else { return }
         roomMuted = on
+        #if CICADA_WATCH_BRIDGE && !CICADA_IOS
+        (audioTap as? WatchPCMSource)?.setMuted(on)
+        #endif
         (audioTap as? RoomMic)?.muted = on
         (audioTap as? EchoCancelledRoomMic)?.muted = on
         if role == .room || settings.listensToRoom { debugLog("room mic \(on ? "muted" : "open")") }
@@ -655,6 +719,7 @@ final class ListenEngine {
     }
 
     private func switchTranscriber(to lang: Lang, replaySeconds: Double = 0) async {
+        guard !watchInputEnded else { return }
         // No models to switch between: the service hears every language, and a language picked in
         // settings only becomes its hint (`cloudHint`).
         if Recognition.cloudOnly || serverHears {
@@ -674,7 +739,7 @@ final class ListenEngine {
             recognizer = nil
             await old.cancel()
         }
-        guard isRunning, gen == generation else { return }
+        guard isRunning, !watchInputEnded, gen == generation else { return }
 
         let previous = activeLang
         if activeLang != lang {
@@ -700,7 +765,7 @@ final class ListenEngine {
                 // retrying would fail the same way every 30 s. Go back to the one that works, unsure again.
                 debugLog("model for \(lang.locale) unavailable, back to \(previous!.locale): \(error)")
                 if await modelFailed(lang, error, picked: true) {
-                    guard isRunning, gen == generation else { return }
+                    guard isRunning, !watchInputEnded, gen == generation else { return }
                     Task { await switchTranscriber(to: lang, replaySeconds: replaySeconds) }
                     return
                 }
@@ -708,7 +773,7 @@ final class ListenEngine {
                 languageConfirmed = false
                 // macOS 14/15: a language is added in Dictation settings, which only the user can do.
                 setStatus(Recognition.needsUser(error) ? error.localizedDescription : L("没能下载 \(lang.name) 语音模型"))
-                guard isRunning, gen == generation else { return }
+                guard isRunning, !watchInputEnded, gen == generation else { return }
                 Task { await switchTranscriber(to: previous!) }
                 return
             } catch {
@@ -716,22 +781,22 @@ final class ListenEngine {
                 // Mac): say why instead of retrying every 30 s; the network back or 再试一次 resumes.
                 debugLog("model for \(lang.locale) unavailable, nothing to fall back on: \(error)")
                 if await modelFailed(lang, error, picked: true) {
-                    guard isRunning, gen == generation else { return }
+                    guard isRunning, !watchInputEnded, gen == generation else { return }
                     Task { await switchTranscriber(to: lang, replaySeconds: replaySeconds) }
                     return
                 }
                 setStatus(Recognition.needsUser(error) ? error.localizedDescription : L("没能下载 \(lang.name) 语音模型"))
                 return
             }
-            guard isRunning, gen == generation else { return }
+            guard isRunning, !watchInputEnded, gen == generation else { return }
             let stream = try await Recognition.start(lang.locale, drafts: true, confidence: true)
-            guard isRunning, gen == generation else {
+            guard isRunning, !watchInputEnded, gen == generation else {
                 await stream.cancel()
                 return
             }
             var listening: RecognitionStream = stream
             if let record = try? await Recognition.startRecord(lang.locale, format: stream.format) {
-                guard isRunning, gen == generation else {
+                guard isRunning, !watchInputEnded, gen == generation else {
                     await stream.cancel()
                     await record.cancel()
                     return
@@ -763,6 +828,11 @@ final class ListenEngine {
 
     private func recognitionFailed(_ error: Error, generation gen: Int) {
         guard gen == generation, isRunning else { return }
+        if watchInputEnded {
+            watchDrainFailed = true
+            setStatus(error.localizedDescription)
+            return
+        }
         debugLog("recognition error: \(error)")
         failureStreak += 1
         var delay = min(30.0, 2.0 * pow(2.0, Double(failureStreak - 1)))
@@ -1177,6 +1247,7 @@ final class ListenEngine {
 
     /// 先用○○听: the service hears the meeting until the model being downloaded is on the Mac.
     func startCloud() {
+        guard !watchInputEnded else { return }
         guard isRunning, !cloudListening, cloudService != nil, let translator else { return }
         let awaiting = downloading?.lang ?? modelProblem?.lang
         debugLog("cloud: on (\(cloudService ?? "?")), replacing \(recognizer == nil ? "nothing" : activeLang?.locale ?? "?"), awaiting \(awaiting?.locale ?? "none")")
@@ -1224,6 +1295,10 @@ final class ListenEngine {
                 return heard
             } catch {
                 guard gen == self.generation, self.cloudListening, !(error is CancellationError) else { return nil }
+                if self.watchInputEnded {
+                    self.watchDrainFailed = true
+                    self.setStatus(error.localizedDescription)
+                }
                 debugLog("cloud: hear failed: \(error)")
                 self.cloudFailures += 1
                 // The service is down or the key stopped working: listening shouldn't go quiet with it.
@@ -1248,6 +1323,10 @@ final class ListenEngine {
             do {
                 for try await piece in stream.results { self?.handle(piece, generation: gen) }
             } catch {
+                if self?.watchInputEnded == true {
+                    self?.watchDrainFailed = true
+                    self?.setStatus(error.localizedDescription)
+                }
                 debugLog("cloud: stream ended: \(error)")
             }
         }
@@ -1256,6 +1335,7 @@ final class ListenEngine {
 
     /// 换回等待 (or the service failing): back to what listened before, the download carrying on.
     func stopCloud() {
+        guard !watchInputEnded else { return }
         guard cloudListening, !Recognition.cloudOnly else { return }
         let back = cloudReplaced
         let lang = back?.lang ?? activeLang
@@ -1309,6 +1389,7 @@ final class ListenEngine {
 
     /// A model came in while the service listened: the awaited one goes back to listening on the Mac.
     private func cloudModelArrived() {
+        guard !watchInputEnded else { return }
         // The user chose their service: a model arriving is only the fallback getting ready.
         guard !serverHears else { return }
         guard let awaiting = cloudAwaiting, installedLocales.contains(awaiting.locale) else { return }

@@ -717,8 +717,32 @@ struct SettingsView: View {
         }
     }
 
+    private var meetingInput: some View {
+        let inputs = AudioDevices.inputs().filter {
+            !$0.isVirtualMic && !$0.uid.hasPrefix("CADefaultDeviceAggregate")
+        }
+        let chosen = inputs.first { $0.uid == settings.roomMicUID }?.name
+        let value = settings.roomMicUID.isEmpty ? L("自动") : chosen ?? L("所选麦克风未连接，暂用自动")
+        return SettingsCard {
+            SettingsRow(title: L("会议收音设备"),
+                        detail: L("先关闭麦克风再切换；可选 iPhone 连续互通或 AirPods"),
+                        divider: false) {
+                PillMenu(value: value, options: [("", L("自动"))] + inputs.map { ($0.uid, $0.name) }) {
+                    guard !model.micOn else { return }
+                    settings.roomMicUID = $0
+                }
+                .disabled(model.micOn)
+            }
+            SettingsRow(title: L("当前收音"),
+                        detail: model.activeMeetingInputName ?? L("麦克风未启动"), divider: false) {
+                SoftButton(L("刷新设备")) { model.refreshOutputs() }
+            }
+        }
+    }
+
     private var records: some View {
         VStack(alignment: .leading, spacing: 14) {
+            meetingInput
             SettingsCard {
                 SettingsRow(title: L("保存会议录音"), detail: L("只存在这台 Mac 上")) {
                     Toggle("保存会议录音", isOn: $settings.recordAudio)

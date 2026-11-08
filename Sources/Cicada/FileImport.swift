@@ -37,6 +37,7 @@ final class FileImporter: ObservableObject {
 
     /// A file was transcribed and translated to the end.
     var onFinished: ((_ sessionID: String) -> Void)?
+    var onFailed: (([URL]) -> Void)?
 
     let store: SessionStore
     let settings: AppSettings
@@ -62,7 +63,7 @@ final class FileImporter: ObservableObject {
 
     /// Only things AVFoundation can play: audio, or video with a sound track.
     nonisolated static func importable(_ url: URL) -> Bool {
-        guard let type = UTType(filenameExtension: url.pathExtension.lowercased()) else { return false }
+        guard url.isFileURL, let type = UTType(filenameExtension: url.pathExtension.lowercased()) else { return false }
         return type.conforms(to: .audio) || type.conforms(to: .movie) || type.conforms(to: .audiovisualContent)
     }
 
@@ -70,14 +71,23 @@ final class FileImporter: ObservableObject {
     @discardableResult
     func add(_ urls: [URL]) async -> [String] {
         var ids: [String] = []
+        var failed: [URL] = []
         for url in urls where Self.importable(url) {
-            let (date, length) = await Self.facts(url)
-            let s = store.beginImport(file: url, recordedAt: date, duration: length)
-            queue.append(Job(id: s.id, url: url))
-            ids.append(s.id)
-            debugLog("import: queued \(s.id) (\(Int(length)) s)")
+            let access = url.startAccessingSecurityScopedResource()
+            defer { if access { url.stopAccessingSecurityScopedResource() } }
+            do {
+                let (date, length) = await Self.facts(url)
+                let s = try await store.beginImport(file: url, recordedAt: date, duration: length)
+                guard let path = s.sourcePath else { continue }
+                queue.append(Job(id: s.id, url: URL(fileURLWithPath: path)))
+                ids.append(s.id)
+                debugLog("import: queued \(s.id)")
+            } catch {
+                failed.append(url)
+            }
         }
         next()
+        if !failed.isEmpty { onFailed?(failed) }
         return ids
     }
 

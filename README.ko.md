@@ -175,3 +175,8 @@ scripts/package.sh          # 정식 버전 DMG, zip 및 SHA-256 체크섬 패�
 ## 라이선스
 
 이 프로젝트는 [Apache-2.0](LICENSE) 라이선스로 공개되어 있습니다. 가상 마이크 드라이버 BlackHole 2ch는 GPL 라이선스를 따르며 설치 패키지에 포함되지 않고 설치를 누를 때 공식 주소에서 내려받습니다. 포함된 성문 모델은 [WeSpeaker](https://github.com/wenet-e2e/wespeaker)가 VoxCeleb으로 학습한 ResNet34-LM(CC BY 4.0 라이선스)이며 `scripts/convert-voiceprint.py`로 Core ML로 변환했습니다.
+
+
+## Apple live input development
+
+개발 브랜치에 iPhone 연속성/AirPods 회의 입력 선택, 가져오기 사본 보관, API URL 검증 및 명시적으로 켜는 Watch→Mac 실시간 인식 개발 브리지가 포함됩니다. Watch 설치·페어링·실기기 백그라운드는 미검증이며 정식 릴리스가 아닙니다. [안내](docs/apple-recording-handoff.md).

@@ -56,6 +56,35 @@ struct AIProviderTests {
         #expect(AIProvider.customBase("  ") == nil)
     }
 
+    /// Credentials belong in AIKey, never in an address saved with ordinary settings.
+    @Test func customAddressRejectsUserInfo() {
+        for address in ["https://user:password@api.example.com/v1", "https://user@api.example.com/v1",
+                        "https://:password@api.example.com/v1", "https://@api.example.com/v1",
+                        "user:password@api.example.com/v1", "http://user:password@localhost:11434/v1"] {
+            #expect(AIProvider.customBase(address) == nil, "\(address)")
+        }
+    }
+
+    @Test func customAddressRejectsQuery() {
+        for address in ["https://api.example.com/v1?key=test-only", "https://api.example.com/v1?",
+                        "api.example.com/v1?model=example", "http://localhost:11434/v1?key=test-only"] {
+            #expect(AIProvider.customBase(address) == nil, "\(address)")
+        }
+    }
+
+    @Test func customAddressRejectsFragment() {
+        for address in ["https://api.example.com/v1#test-only", "https://api.example.com/v1#",
+                        "api.example.com/v1#settings", "http://localhost:11434/v1#test-only"] {
+            #expect(AIProvider.customBase(address) == nil, "\(address)")
+        }
+    }
+
+    @Test func customAddressKeepsEncodedPathCharacters() {
+        let address = "https://api.example.com/team%40work/route%3Fname%23tag/v1"
+        #expect(AIProvider.customBase(address)?.absoluteString == address + "/")
+        #expect(AIProvider.customBase("  https://api.example.com/v1/\n")?.absoluteString == "https://api.example.com/v1/")
+    }
+
     @Test func theLocalNetworkMayUsePlainHTTP() {
         for ok in ["http://192.168.1.20:8000/v1", "10.0.0.5:8000/v1", "http://172.20.1.1/v1", "http://100.101.102.103:8000/v1",
                    "http://169.254.3.4/v1", "http://gpu.local:30000/v1", "http://[fd12:3456::1]:8000/v1", "http://[::1]:8000/v1"] {
