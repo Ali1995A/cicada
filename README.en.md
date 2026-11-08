@@ -31,6 +31,8 @@ Whether you're on Zoom, Feishu, or Tencent Meeting, or listening to X Spaces or 
   <img src="docs/demo.gif" width="800" alt="A Bloomberg English livestream on YouTube with Cicada's live Chinese notes, topics, and fishbone diagram on the right and bilingual subtitles at the bottom">
 </p>
 
+> **Development branch, not a release:** adds meeting input selection, retained import copies and API URL validation. Apple Watch live input is an experimental developer-configured prototype. The official download above is the upstream release and does not include unmerged branch changes. See [new features and limitations](#apple-live-input-development).
+
 ## Platforms
 
 | Platform | Requirements | Notes |
@@ -179,4 +181,19 @@ This project is licensed under [Apache-2.0](LICENSE). The BlackHole 2ch virtual 
 
 ## Apple live input development
 
-This development branch adds explicit iPhone Continuity/AirPods meeting inputs, retained import copies and API URL validation, plus an opt-in Watch-to-Mac live recognition development bridge. Watch packaging, pairing and real-device background behavior remain unverified; this is not a release. See [Apple input guidance](docs/apple-recording-handoff.md).
+**Available on this development branch only; not released.**
+
+| Path | Implementation and limits |
+|---|---|
+| iPhone → Mac | Select the Continuity microphone exposed by macOS; Apple's device, account and connection requirements apply. Direct streaming from the Cicada iPhone app is not implemented. |
+| AirPods → Mac | Explicit microphone selection for the wearer's voice, not room-wide capture. Bluetooth microphone use can reduce playback quality. |
+| Watch → Mac | Experimental live PCM → HTTPS → Mac recognition, captions and records. Disabled in ordinary builds; installable Watch packaging and pairing UI remain unfinished. |
+| File import | Offline processing, not live recognition. Imports retain a complete copy, including video, and require additional disk space. |
+
+**Select an input:** close the meeting microphone, choose the device in Settings → General, then reopen it. Check the active-input row. This does not change the macOS default input; unavailable selections may fall back to automatic selection.
+
+**Custom APIs:** choose a compatible endpoint and model in Settings → AI service. Text, ASR and TTS support must be matched separately. Existing cloud ASR uses segmented requests, not an arbitrary realtime WebSocket protocol. Cloud recognition sends audio to the configured service and may incur charges.
+
+**Background and verification:** Mac must stay awake with the app running; lid closure and sleep are not supported promises. Cloud macOS tests, Watch SDK typechecking and packaging passed; see the [verification record](docs/apple-recording-handoff.md#verification). Real iPhone/AirPods/Watch capture, pairing, lock-screen/background operation and latency remain unverified.
+
+See [Apple input guidance](docs/apple-recording-handoff.md) for developer setup, authentication, disconnection and privacy. Neither offline import nor transport acceptance proves successful live recognition.

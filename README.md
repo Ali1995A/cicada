@@ -31,6 +31,8 @@
   <img src="docs/demo.gif" width="800" alt="YouTube 播着 Bloomberg 英文直播，右边是知了实时整理的中文纪要、议题与鱼骨图，底部是双语字幕">
 </p>
 
+> **开发分支，非正式发行版：** 本分支新增会议收音设备选择、导入副本保留和 API 地址校验；Apple Watch 实时接入仍为需要开发者配置的实验原型。上方官网下载的是上游正式版，不包含本分支尚未合并的功能。详见[新增功能与限制](#apple-live-input-development)。
+
 ## 平台
 
 | 平台 | 系统要求 | 说明 |
@@ -179,4 +181,19 @@ scripts/package.sh          # 打包正式版 DMG、zip 和 SHA-256 校验值
 
 ## Apple live input development
 
-本开发分支提供会议收音设备选择（iPhone 连续互通或 AirPods）、导入副本保留与 API 地址校验，并包含可显式启用的 Watch→Mac 实时识别开发桥接。Watch 安装、配对与真机后台行为仍待验证，不是正式发布。见 [Apple 接入说明](docs/apple-recording-handoff.md)。
+**仅本开发分支，尚未发布。**
+
+| 路径 | 当前实现与限制 |
+|---|---|
+| iPhone → Mac | 选择 macOS 提供的连续互通麦克风；需满足 Apple 的设备、同一账号和连接条件。不是 iPhone Cicada app 直接推流，后者尚未实现。 |
+| AirPods → Mac | 可明确选择 AirPods 麦克风，主要收佩戴者声音；蓝牙收音可能降低播放音质。 |
+| Watch → Mac | 实验性实时 PCM → HTTPS → Mac 识别、字幕及记录链路；默认构建不启用。尚无完整安装包与配对界面，不能当作即装即用功能。 |
+| 文件导入 | 会后处理，不是实时识别；导入文件会完整复制至会议存储，视频也会占用额外磁盘。 |
+
+**使用设备选择：** 先关闭会议麦克风，在“设置 → 通用”选择收音设备，再打开会议麦克风。查看实际输入设备行确认来源；不修改 macOS 系统默认输入。选择不可用时可能回退自动选择，务必核对实际来源。
+
+**自定义 API：** 在“设置 → AI 服务”选择兼容端点及模型。文本、ASR 和 TTS 能力须分别匹配；现有云 ASR 是分段请求，不支持任意实时 WebSocket 协议。使用云识别会向所配置服务发送音频，并可能计费。
+
+**后台与验证边界：** Mac 必须保持唤醒且程序运行；不能保证合盖或睡眠继续处理。云端 macOS 测试、Watch SDK 类型检查及打包已通过，详见[验证记录](docs/apple-recording-handoff.md#verification)；iPhone、AirPods、Watch 真机收音、配对、锁屏/后台与延迟仍未验证。
+
+Watch 开发启用方法、认证、断连和隐私说明见 [Apple 接入说明](docs/apple-recording-handoff.md)。不要将会后录音导入或传输成功提示当作实时识别成功。

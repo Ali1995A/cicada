@@ -72,13 +72,18 @@ validated. No workout-session or TLS-security bypass is used.
 
 ## Verification
 
-The macOS CI baseline native suite passed **285 tests** at commit `029073a`.
-Linux cloud protocol/FIFO tests passed 16 synthetic cases. macOS protocol tests
-found a test-client race during early oversized-request rejection; it was fixed
-and the next macOS run passed that stage. Bridge-enabled compilation, watchOS
-typechecking and complete development packaging are tracked by
-[Apple validation CI](https://github.com/Ali1995A/cicada/actions).
-Do not infer their success from the baseline result.
+At code commit `aad66095bb821dbe97b4a0a20dbfd82223b6628a`:
+
+- [Apple validation run](https://github.com/Ali1995A/cicada/actions/runs/42479825425)
+  passed baseline native tests (285), bridge-enabled native tests (290),
+  16 Python protocol/HTTP/FIFO tests, watchOS simulator SDK typechecking and
+  the development app build with the bridge enabled.
+- [Standard build run](https://github.com/Ali1995A/cicada/actions/runs/42479830287)
+  passed native tests and Apple Silicon/Intel packaging.
+
+These results apply to that exact code commit, not a hardware deployment or a
+production release. Later documentation-only changes do not represent another
+device test.
 
 Real microphones, Watch/iPhone/AirPods hardware, TLS pairing, cloud ASR,
 background/lock-screen, recording alignment and long-session battery behavior
