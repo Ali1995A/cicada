@@ -175,3 +175,7 @@ scripts/package.sh          # 정식 버전 DMG, zip 및 SHA-256 체크섬 패�
 ## 라이선스
 
 이 프로젝트는 [Apache-2.0](LICENSE) 라이선스로 공개되어 있습니다. 가상 마이크 드라이버 BlackHole 2ch는 GPL 라이선스를 따르며 설치 패키지에 포함되지 않고 설치를 누를 때 공식 주소에서 내려받습니다. 포함된 성문 모델은 [WeSpeaker](https://github.com/wenet-e2e/wespeaker)가 VoxCeleb으로 학습한 ResNet34-LM(CC BY 4.0 라이선스)이며 `scripts/convert-voiceprint.py`로 Core ML로 변환했습니다.
+
+## 회의 오디오 입력
+
+설정 → 일반에서 macOS에 표시되는 iPhone 연속성 마이크, AirPods 또는 다른 물리 입력을 선택할 수 있습니다. 시스템 기본 마이크는 변경하지 않습니다. 전환하기 전에 회의 마이크를 끄세요. 자동 선택은 회의실 마이크를 우선하며 연결이 끊기면 기존 대체 선택과 알림을 사용합니다. 연속성은 Apple의 기기·계정·네트워크 조건을 충족해야 합니다. AirPods는 주로 착용자의 목소리를 수음합니다.

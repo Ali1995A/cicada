@@ -211,6 +211,10 @@ final class AppSettings: ObservableObject {
     @Published var listenSource: String {
         didSet { save() }
     }
+    /// Meeting input UID; empty keeps automatic selection. Does not change the system default.
+    @Published var roomMicUID: String {
+        didSet { save() }
+    }
     /// Only the room: nothing is in a call on this Mac (the translation is read out of the speakers).
     var listensToRoom: Bool { listenSource == "room" }
     /// The room mic is open: 会议室 or 电脑和会议室.
@@ -267,6 +271,7 @@ final class AppSettings: ObservableObject {
         silenceEnd = defaults.string(forKey: "silenceEnd") ?? "prompt"
         silenceMinutes = defaults.object(forKey: "silenceMinutes") as? Double ?? 10
         listenSource = ["room", "both"].contains(defaults.string(forKey: "listenSource")) ? defaults.string(forKey: "listenSource")! : "system"
+        roomMicUID = defaults.string(forKey: "roomMicUID") ?? ""
         diagnostics = defaults.object(forKey: "diagnostics") as? Bool ?? DevBuild.isDev
         notesCapturable = defaults.bool(forKey: "notesCapturable")
         fixMisheard = defaults.object(forKey: "fixMisheard") as? Bool ?? true
@@ -322,6 +327,7 @@ final class AppSettings: ObservableObject {
         defaults.set(silenceEnd, forKey: "silenceEnd")
         defaults.set(silenceMinutes, forKey: "silenceMinutes")
         defaults.set(listenSource, forKey: "listenSource")
+        defaults.set(roomMicUID, forKey: "roomMicUID")
         defaults.set(diagnostics, forKey: "diagnostics")
         defaults.set(notesCapturable, forKey: "notesCapturable")
         defaults.set(speakerVoices, forKey: "speakerVoices")
