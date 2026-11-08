@@ -24,7 +24,11 @@ enum RoomMicPlan {
     /// The system default, unless it is the virtual mic (同声传译 makes it the default) or a
     /// Bluetooth headset's (AirPods hear the wearer, not the table, and drop to call quality while
     /// their mic is open); then the Mac's own microphone.
-    static func pick(defaultUID: String?, inputs: [Input]) -> String? {
+    static func pick(defaultUID: String?, inputs: [Input], preferredUID: String? = nil) -> String? {
+        // Automatic mode favors a table mic; an explicit choice may be an AirPods mic.
+        if let preferred = inputs.first(where: { $0.uid == preferredUID }), !preferred.virtual {
+            return preferred.uid
+        }
         if let d = inputs.first(where: { $0.uid == defaultUID }), !d.virtual, !d.bluetooth { return d.uid }
         return inputs.first(where: \.builtIn)?.uid
             ?? inputs.first(where: { !$0.virtual && !$0.bluetooth })?.uid
@@ -96,7 +100,7 @@ extension AudioDevices {
     static var roomMic: OutputDevice? { roomMic(excluding: []) }
 
     /// `excluding`: inputs to treat as gone (the debug command's pretend unplug).
-    static func roomMic(excluding: Set<String>) -> OutputDevice? {
+    static func roomMic(excluding: Set<String>, preferredUID: String? = nil) -> OutputDevice? {
         let all = inputs().filter { !excluding.contains($0.uid) }
         let plan = all.map { d -> RoomMicPlan.Input in
             let t = transport(d.id)
@@ -105,7 +109,7 @@ extension AudioDevices {
                          // The aggregate macOS makes for echo cancellation is no microphone of its own.
                          virtual: d.isVirtualMic || d.uid.hasPrefix("CADefaultDeviceAggregate"))
         }
-        let uid = RoomMicPlan.pick(defaultUID: defaultInput?.uid, inputs: plan)
+        let uid = RoomMicPlan.pick(defaultUID: defaultInput?.uid, inputs: plan, preferredUID: preferredUID)
         return all.first { $0.uid == uid }
     }
 }

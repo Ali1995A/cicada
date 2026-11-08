@@ -1385,3 +1385,11 @@
 "发送录音到 Mac" = "Send recording to Mac";
 
 "请输入 API 基础地址，不要包含用户名、密码、查询参数或片段。" = "Enter an API base URL without a username, password, query or fragment.";
+
+/* Live meeting inputs */
+"会议收音设备" = "Meeting audio input";
+"先关闭麦克风再切换；可选 iPhone 连续互通或 AirPods" = "Turn the microphone off before switching; choose iPhone Continuity or AirPods";
+"所选麦克风未连接，暂用自动" = "Selected microphone unavailable; using Automatic";
+"当前收音" = "Current audio input";
+"麦克风未启动" = "Microphone not active";
+"刷新设备" = "Refresh devices";

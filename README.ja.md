@@ -179,3 +179,7 @@ scripts/package.sh          # 打包正式版 DMG、zip 和 SHA-256 校验值
 ## Apple 録音連携の開発ブランチ
 
 Mac の読み込み音声コピー保存、実験的な iPhone 音声共有、カスタム API URL 検証を追加します。Apple Watch はボイスメモの対応する書き出し手順を使用します。Watch アプリやリアルタイム転送は含みません。Apple 環境でのビルドと実機テストは未実施です。正式版として扱わないでください。[連携ガイド](docs/apple-recording-handoff.md)。
+
+## Live input prototype
+
+開発ブランチでは、iPhone の連係マイクや AirPods を Mac のリアルタイム認識に使う入力選択を追加しています。ネイティブビルドと実機検証は未完了です。Apple Watch のライブ転送は未実装です。 [Details](docs/apple-recording-handoff.md)

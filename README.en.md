@@ -179,3 +179,7 @@ This project is licensed under [Apache-2.0](LICENSE). The BlackHole 2ch virtual 
 ## Apple recording handoff development branch
 
 This branch adds retained Mac import copies, experimental iPhone audio sharing, and custom API URL validation. Apple Watch recordings use a supported Voice Memos export workflow; there is no native Watch app or live streaming. Apple builds and real-device testing are pending. Do not treat this as a release. See the [handoff guide](docs/apple-recording-handoff.md).
+
+## Live input prototype
+
+This development branch adds a meeting input picker for an iPhone Continuity microphone or AirPods feeding Mac live recognition. Native build/device validation is pending; Apple Watch live streaming is not implemented. [Details](docs/apple-recording-handoff.md)

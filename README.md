@@ -179,3 +179,7 @@ scripts/package.sh          # 打包正式版 DMG、zip 和 SHA-256 校验值
 ## Apple 录音接入开发分支
 
 此分支增加 Mac 导入录音副本留存、实验性 iPhone 录音分享及自定义 API 地址校验。Apple Watch 可通过语音备忘录的受支持导出流程提供文件；没有原生手表 App 或实时传输。代码尚未经过 Apple 环境编译和真机验证，暂勿作为正式版本安装。流程、API 配置和验证限制见 [接入说明](docs/apple-recording-handoff.md)。
+
+## Live input prototype
+
+开发分支新增会议收音设备选择：iPhone 连续互通麦克风或 AirPods 接入 Mac 的实时识别链路。尚未原生编译/真机验收；Apple Watch 实时传输未实现。 [Details](docs/apple-recording-handoff.md)
