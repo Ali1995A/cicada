@@ -33,7 +33,12 @@ def commits():
     except subprocess.CalledProcessError:
         since = "HEAD"  # no tag yet: everything
     out = git("log", "--reverse", "--format=%H%x09%s", since)
-    return [line.split("\t", 1) for line in out.splitlines() if line]
+    entries = [line.split("\t", 1) for line in out.splitlines() if line]
+    # A commit reverted in the same release never shipped: drop it. The revert names it in its body
+    # ("Reverts 8e9623b" or git's "This reverts commit <sha>"), short or full.
+    bodies = git("log", "--format=%B", since)
+    gone = re.findall(r"\b[Rr]everts (?:commit )?([0-9a-f]{7,40})\b", bodies)
+    return [(sha, subject) for sha, subject in entries if not any(sha.startswith(g) for g in gone)]
 
 
 PLATFORMS = {"mac": "Mac", "windows": "Windows", "android": "Android", "linux": "Linux", "site": "Website"}
