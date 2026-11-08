@@ -907,6 +907,7 @@ final class AppModel: ObservableObject {
     /// The actual pinned live input, rather than a saved preference that may be disconnected.
     var activeMeetingInputName: String? {
         let engine = settings.hearsBoth ? roomListen : listen
+        if engine.isRunning && engine.isWatchInput { return "Apple Watch (experimental)" }
         guard settings.hearsRoom, engine.isRunning, let uid = engine.roomMicUID else { return nil }
         return AudioDevices.inputs().first { $0.uid == uid }?.name
     }

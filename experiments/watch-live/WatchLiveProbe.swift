@@ -19,7 +19,7 @@ private struct ProbeFailure: LocalizedError {
 
 @MainActor
 final class WatchProbe: ObservableObject {
-    @Published var status = "未开始 · 仅验证音频传输"
+    @Published var status = "未开始 · 实验性远程收音"
     @Published var running = false
     private var engine: AVAudioEngine?
     private var upload: Task<Void, Never>?
@@ -88,7 +88,7 @@ final class WatchProbe: ObservableObject {
                     }
                 ]
                 try engine.start()
-                status = "边录边传 · 不是语音识别"
+                status = "边录边传 · 请在 Mac 检查识别"
                 var sequence = 0
                 for try await frame in stream {
                     try Task.checkCancellation()
@@ -279,7 +279,7 @@ struct LiveTransportProbeApp: App {
                 if probe.running {
                     Button("停止并确认末段") { probe.stop() }
                 } else {
-                    Button("开始传输验证") { probe.start(endpoint: endpoint, token: token) }
+                    Button("开始远程收音") { probe.start(endpoint: endpoint, token: token) }
                 }
             }
         }

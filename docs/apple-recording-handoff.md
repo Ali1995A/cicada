@@ -73,3 +73,7 @@ The new API URL validation also runs before saving the three endpoint fields to 
 ## Watch transport experiment update (2026-11-08)
 
 Cloud Python execution was restored for the isolated transport experiment. Ten synthetic protocol/loopback HTTP tests passed. No native Swift build, full Cicada suite or device test has run. The experiment sends audio during recording and only acknowledges/prints transport metadata, with HTTPS, a per-run private pairing token, bounded buffers and visible interruption failure. It does not yet provide Watch transcription, captions, notes, background guarantees or an installable watchOS target. See its README for the remaining integration and device acceptance work.
+
+## Native Watch bridge source update
+
+The draft now includes an explicit DEBUG-only private FIFO input to AudioRouter/ListenEngine. With the HTTPS receiver's --native-fifo option, Watch PCM is routed into the existing native/custom-ASR, subtitle and record chain; custom AI still uses LingClient. Sixteen synthetic Python protocol/HTTP/POSIX FIFO tests pass. This supersedes the earlier transport-only status above, not its verification caveats: neither Swift target nor real audio/cloud ASR has been run. Normal builds do not enable this input. See experiments/watch-live/README.md for setup, drain/mute/sample-clock handling and remaining device tests. This is not an installable release.
