@@ -1555,6 +1555,9 @@ struct FixTermsView: View {
                 out[word] = e
             }
         }
-        return out.map { ($0.key, $0.value.heard, $0.value.count) }.sorted { $0.count > $1.count }
+        // Ties by word: a Dictionary's order differs with each instance, and this runs on every
+        // redraw (the window ticks each second), so the chips would swap places.
+        return out.map { ($0.key, $0.value.heard, $0.value.count) }
+            .sorted { $0.count != $1.count ? $0.count > $1.count : $0.word < $1.word }
     }
 }

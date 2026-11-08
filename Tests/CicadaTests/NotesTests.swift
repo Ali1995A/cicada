@@ -164,4 +164,17 @@ import Testing
         #expect(NotesEngine.subject("Budget review (cont.)") == "Budget review")
         #expect(NotesEngine.subject("(续)") == "(续)")
     }
+
+    @Test func fixedWordsKeepOneOrderAcrossRedraws() {
+        var lines: [TranscriptLine] = []
+        for (i, w) in ["王总", "Kubernetes", "李雷", "OpenAI", "张三", "Cicada", "李雷"].enumerated() {
+            var l = TranscriptLine(id: "l\(i)", t: Double(i), speaker: "them", src: w, dst: nil, srcLang: "zh-CN", dstLang: "en")
+            l.fixes = [LineFix(from: "x\(i)", to: w)]
+            lines.append(l)
+        }
+        let s = Session(id: "s", title: "t", startedAt: Date(), endedAt: nil, lines: lines, hasAudio: false)
+        let first = FixTermsView.fixedWords(s).map(\.word)
+        #expect(first == ["李雷", "Cicada", "Kubernetes", "OpenAI", "张三", "王总"])
+        for _ in 0..<20 { #expect(FixTermsView.fixedWords(s).map(\.word) == first) }
+    }
 }
