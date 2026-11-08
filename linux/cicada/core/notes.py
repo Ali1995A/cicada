@@ -202,6 +202,9 @@ class NotesEngine:
                 return
             if not final and not fresh:
                 nxt.topics = merge(base.topics, frozen, nxt.topics)
+            if not fresh:
+                prior = self.notes if sid == self.shown_id else session.notes
+                nxt.terms = NoteTerm.keeping_order(prior.terms if prior else [], nxt.terms)
             carry_times(base, nxt)
             nxt.title = nxt.title or base.title or (session.notes.title if session.notes else None)
             nxt.covered = len(lines)

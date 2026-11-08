@@ -168,4 +168,13 @@ public sealed class NoteTerm
         var list = terms.ToList();
         return [.. list.Where(t => t.Heard.Count > 0), .. list.Where(t => t.Heard.Count == 0)];
     }
+
+    /// The reply's terms in the order they were shown before, new ones after: the model often
+    /// returns the same names reshuffled, which would make the chips jump on every update.
+    public static List<NoteTerm> KeepingOrder(IReadOnlyList<NoteTerm> old, IReadOnlyList<NoteTerm> next)
+    {
+        var rank = new Dictionary<string, int>();
+        for (var i = 0; i < old.Count; i++) rank.TryAdd(old[i].Name, i);
+        return [.. next.Select((t, i) => (t, i)).OrderBy(p => rank.TryGetValue(p.t.Name, out var r) ? r : old.Count + p.i).ThenBy(p => p.i).Select(p => p.t)];
+    }
 }

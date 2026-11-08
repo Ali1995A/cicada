@@ -99,6 +99,7 @@ class NotesEngine(private val ling: LingClient, private val store: SessionStore)
     private fun update(id: String, final: Boolean) {
         val session: Session
         val base: MeetingNotes
+        val prior: List<NoteTerm>
         synchronized(gate) {
             if (inFlight) { if (final) pendingFinal = id; return }
             session = store.get(id) ?: return
@@ -108,6 +109,7 @@ class NotesEngine(private val ling: LingClient, private val store: SessionStore)
             lastAttempt = System.currentTimeMillis()
             status = State.Updating
             base = if (final) MeetingNotes() else if (id == shownId) notes else session.notes ?: MeetingNotes()
+            prior = (if (id == shownId) notes else session.notes)?.terms ?: emptyList()
         }
         changed()
         try {
@@ -137,6 +139,7 @@ class NotesEngine(private val ling: LingClient, private val store: SessionStore)
                 return
             }
             if (!final) next.topics = merge(base.topics, frozen, next.topics).toMutableList()
+            next.terms = NoteTerm.keepingOrder(prior, next.terms).toMutableList()
             carryTimes(base, next)
             next.title = next.title ?: base.title ?: session.notes?.title
             next.covered = lines.size

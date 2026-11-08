@@ -85,6 +85,15 @@ struct NoteTerm: Codable, Equatable, Identifiable {
         terms.filter { !$0.heard.isEmpty } + terms.filter { $0.heard.isEmpty }
     }
 
+    /// The reply's terms in the order they were shown before, new ones after: the model often
+    /// returns the same names reshuffled, which would make the chips jump on every update.
+    static func keepingOrder(_ old: [NoteTerm], _ new: [NoteTerm]) -> [NoteTerm] {
+        let rank = Dictionary(old.enumerated().map { ($1.name, $0) }, uniquingKeysWith: { a, _ in a })
+        return new.enumerated().sorted { a, b in
+            (rank[a.element.name] ?? old.count + a.offset, a.offset) < (rank[b.element.name] ?? old.count + b.offset, b.offset)
+        }.map(\.element)
+    }
+
     /// Roles that say a term is a person, for offering it as a speaker's name.
     private static let roles = ["首席", "执行官", "主席", "总裁", "董事", "经理", "创始人", "记者", "主持", "研究员",
                                 "分析师", "教授", "老师", "教师", "官员", "部长", "议员", "候选人", "嘉宾", "发言人",
@@ -309,6 +318,7 @@ final class NotesEngine: ObservableObject {
                 return
             }
             if !final, !fresh { next.topics = Self.merge(base.topics, frozen: frozen, returned: next.topics) }
+            if !fresh { next.terms = NoteTerm.keepingOrder((id == shownID ? notes : session.notes)?.terms ?? [], next.terms) }
             Self.carryTimes(from: base, into: &next)
             // A reply without a name keeps the last one (not after a language change).
             if next.title == nil, !fresh { next.title = (id == shownID ? notes : session.notes)?.title }

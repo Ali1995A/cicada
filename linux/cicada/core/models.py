@@ -173,6 +173,15 @@ class NoteTerm:
         """Corrected spellings first: what a reader can't work out alone."""
         return [t for t in terms if t.heard] + [t for t in terms if not t.heard]
 
+    @staticmethod
+    def keeping_order(old: list, new: list) -> list:
+        """The reply's terms in the order they were shown before, new ones after: the model often
+        returns the same names reshuffled, which would make the chips jump on every update."""
+        rank: dict = {}
+        for i, t in enumerate(old):
+            rank.setdefault(t.name, i)
+        return [t for _, t in sorted(enumerate(new), key=lambda p: (rank.get(p[1].name, len(old) + p[0]), p[0]))]
+
 
 @dataclass
 class FishboneBranch:

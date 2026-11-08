@@ -546,6 +546,11 @@ class Segmenting(Base):
 
 
 class Notes(Base):
+    def test_terms_keep_their_place(self):
+        terms = lambda names: [NoteTerm(n) for n in names.split(",")]
+        self.assertEqual([t.name for t in NoteTerm.keeping_order(terms("A,B,C"), terms("C,D,A,B"))], ["A", "B", "C", "D"])
+        self.assertEqual([t.name for t in NoteTerm.keeping_order(terms("A,B,C"), terms("E,B,D"))], ["B", "E", "D"])
+
     def test_status_follows_the_key_as_on_the_mac(self):
         # A key the check refused is "invalid", not "no key"; a fixed key goes back to idle.
         from cicada.core import ling as lingmod

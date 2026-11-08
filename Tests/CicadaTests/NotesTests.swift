@@ -165,6 +165,14 @@ import Testing
         #expect(NotesEngine.subject("(续)") == "(续)")
     }
 
+    @Test func termsKeepTheirPlaceAcrossUpdates() {
+        let t = { (n: String) in NoteTerm(name: n, note: "", heard: []) }
+        let before = [t("A"), t("B"), t("C")]
+        #expect(NoteTerm.keepingOrder(before, [t("C"), t("D"), t("A"), t("B")]).map(\.name) == ["A", "B", "C", "D"])
+        #expect(NoteTerm.keepingOrder(before, [t("E"), t("B"), t("D")]).map(\.name) == ["B", "E", "D"])
+        #expect(NoteTerm.keepingOrder([], [t("B"), t("A")]).map(\.name) == ["B", "A"])
+    }
+
     @Test func fixedWordsKeepOneOrderAcrossRedraws() {
         var lines: [TranscriptLine] = []
         for (i, w) in ["王总", "Kubernetes", "李雷", "OpenAI", "张三", "Cicada", "李雷"].enumerated() {

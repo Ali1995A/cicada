@@ -119,6 +119,7 @@ public sealed class NotesEngine
     {
         Session? session;
         MeetingNotes baseNotes;
+        List<NoteTerm> prior;
         lock (gate)
         {
             if (inFlight) { if (final) pendingFinal = id; return; }
@@ -129,6 +130,7 @@ public sealed class NotesEngine
             lastAttempt = DateTime.UtcNow;
             Status = State.Updating;
             baseNotes = final ? new MeetingNotes() : (id == ShownId ? Notes : session.Notes ?? new MeetingNotes());
+            prior = (id == ShownId ? Notes : session.Notes)?.Terms ?? [];
         }
         Changed?.Invoke();
         try
@@ -163,6 +165,7 @@ public sealed class NotesEngine
                 return;
             }
             if (!final && !fresh) next.Topics = Merge(baseNotes.Topics, frozen, next.Topics);
+            if (!fresh) next.Terms = NoteTerm.KeepingOrder(prior, next.Terms);
             CarryTimes(baseNotes, next);
             next.Title ??= baseNotes.Title ?? session.Notes?.Title;
             next.Covered = lines.Count;

@@ -223,5 +223,13 @@ class NoteTerm(var name: String = "", var note: String = "", var heard: MutableL
 
         /// Corrected spellings first: what a reader can't work out alone.
         fun ordered(terms: List<NoteTerm>) = terms.filter { it.heard.isNotEmpty() } + terms.filter { it.heard.isEmpty() }
+
+        /// The reply's terms in the order they were shown before, new ones after: the model often
+        /// returns the same names reshuffled, which would make the chips jump on every update.
+        fun keepingOrder(old: List<NoteTerm>, new: List<NoteTerm>): List<NoteTerm> {
+            val rank = HashMap<String, Int>()
+            old.forEachIndexed { i, t -> rank.putIfAbsent(t.name, i) }
+            return new.withIndex().sortedWith(compareBy({ rank[it.value.name] ?: (old.size + it.index) }, { it.index })).map { it.value }
+        }
     }
 }

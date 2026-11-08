@@ -913,6 +913,9 @@ static class Tests
         var abc = new List<NoteTopic> { Topic(0, "a"), Topic(100, "b"), Topic(200, "c") };
         Equal("a,b,c", Titles(NotesEngine.Merge(abc, 1, [])), "an empty reply keeps the topics");
         Equal("a,b,c", Titles(NotesEngine.Merge(abc, 1, [Topic(0, "a")])), "a reply echoing only frozen topics too");
+        static List<NoteTerm> Terms(string names) => [.. names.Split(',').Select(n => new NoteTerm { Name = n })];
+        Equal("A,B,C,D", string.Join(",", NoteTerm.KeepingOrder(Terms("A,B,C"), Terms("C,D,A,B")).Select(t => t.Name)), "terms keep their place, new ones after");
+        Equal("B,E,D", string.Join(",", NoteTerm.KeepingOrder(Terms("A,B,C"), Terms("E,B,D")).Select(t => t.Name)), "dropped terms leave, new ones keep the reply's order");
     }
 
     public static void FullLiveNotesJoinTheShortestSettledPair()

@@ -594,6 +594,9 @@ object Tests {
         val abc = listOf(topic(0.0, "a"), topic(100.0, "b"), topic(200.0, "c"))
         equal("a,b,c", NotesEngine.merge(abc, 1, emptyList()).joinToString(",") { it.title }, "an empty reply keeps the topics")
         equal("a,b,c", NotesEngine.merge(abc, 1, listOf(topic(0.0, "a"))).joinToString(",") { it.title }, "only an echo keeps them too")
+        val terms = { names: String -> names.split(",").map { NoteTerm(it) } }
+        equal("A,B,C,D", NoteTerm.keepingOrder(terms("A,B,C"), terms("C,D,A,B")).joinToString(",") { it.name }, "terms keep their place, new ones after")
+        equal("B,E,D", NoteTerm.keepingOrder(terms("A,B,C"), terms("E,B,D")).joinToString(",") { it.name }, "dropped terms leave, new ones keep the reply's order")
         // A runaway summary is cut to its first sentence.
         val runaway = topic(0.0, "t0").apply { summary = "对方展示AI眼镜后觉得是完全新的体验，提议可以出发回去。" + "最新对方又补充了一些内容，".repeat(20) }
         equal("对方展示AI眼镜后觉得是完全新的体验，提议可以出发回去。", NotesEngine.merge(emptyList(), 0, listOf(runaway))[0].summary, "a runaway summary")
